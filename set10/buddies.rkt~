@@ -1,0 +1,1083 @@
+#lang racket
+
+(require rackunit)
+(require rackunit/text-ui)
+(require 2htdp/universe)
+(require 2htdp/image)
+
+(provide make-world)
+(provide make-rectangle)
+(provide run)
+
+;; start with (run framerate)
+;; Typically: (run 0.25)
+;; ============================================================================
+;; PosInt is a Integer greater than 0.
+
+;; PosNum is a Number greater than 0.
+
+;; Integer a number that can be written without a fractional or 
+;; decimal component.
+;; e.g. -1, 4, 56, -34, etc.
+;; ============================================================================
+
+;; CONSTANTS
+
+;; dimensions of the canvas
+(define CANVAS-WIDTH 400)
+(define CANVAS-HEIGHT 500) 
+
+;; radius of the target circle
+(define TARGET-RADIUS 10)
+
+;; Initial target position i.e. x and y positions of target circle
+(define CANVAS-CENTER-X (/ CANVAS-WIDTH 2))
+(define CANVAS-CENTER-Y (/ CANVAS-HEIGHT 2))
+
+;; Rectangle's dimensions
+(define RECTANGLE-WIDTH 30)
+(define RECTANGLE-HEIGHT 20)
+
+;;Half values of rectangle's width and height
+(define HALF-RECTANGLE-WIDTH (/ RECTANGLE-WIDTH 2))
+(define HALF-RECTANGLE-HEIGHT (/ RECTANGLE-HEIGHT 2))
+
+;; Empty canvas
+(define EMPTY-CANVAS (empty-scene CANVAS-WIDTH CANVAS-HEIGHT))
+
+;; Canvas top-corner positions
+(define CANVAS-TOP-CORNER-X 1)
+(define CANVAS-TOP-CORNER-Y 1)
+
+;; colors of Rectangles:
+(define RED "red")
+(define GREEN "green")
+
+;; ============================================================================
+;; Data Definitions:
+;; ============================================================================
+
+;; World<%> is a world interface type
+
+;; Rectangle<%> is a rectangle interface type
+
+;; Rectangle% (also called Rectangle) is a solid implementation class type,
+;; implementing interface Rectangle<%>.
+
+;; World% (also called World) is a solid implementation class type,
+;; implementing interface World<%>.
+
+;; ============================================================================ 
+;; A ListOf<Rectangle%> is i.e. list of rectangles and is one of
+;; -- empty                                (Interpre: list has no rectangles)
+;; -- (cons Rectangle% ListOf<Rectangle%>) (Interpre: list has one or more
+;;                                          rectangle instances/objects)
+
+;; Template:
+;; list-of-rectangle-fn : ListOf<Rectangle%> -> ??
+;(define (list-of-rectangle-fn lor)
+;  (cond
+;    [(empty? lor) ...]
+;    [else (... (first lor)
+;               (list-of-rectangle-fn (rest lor)))]))
+
+;; ============================================================================ 
+;; A ListOf<Rectangle<%>> is i.e. list of Rectangle<%> i.e. rectangle interface
+;; type and is one of
+;; -- empty                                    (Interpre: list is empty)
+;; -- (cons Rectangle<%> ListOf<Rectangle<%>>) (Interpre: list has one or more
+;;                                              rectangle interface type 
+;;                                              instances/objects)
+
+;; Template:
+;; list-of-rect-intf-fn : ListOf<Rectangle<%>> -> ??
+;(define (list-of-rect-intf-fn lor)
+;  (cond
+;    [(empty? lor) ...]
+;    [else (... (first lor)
+;               (list-of-rect-intf-fn (rest lor)))]))
+
+;; ============================================================================ 
+
+;; A ListOf<Subscriber%> is a ListOf<Rectangle%> 
+;; WHERE: Given a Rectangle, the ListOf<Subscriber%> represents the rectangles 
+;; which are buddies of the given Rectangle 
+
+;; ============================================================================
+
+;; A WorldMouseEvent is a partition of MouseEvent into the
+;; following categories:
+;; -- "button-down"         (interp: maybe select rectangle and/or 
+;;                                                          target on canvas)
+;; -- "drag"                (interp: maybe drag rectangle and/or 
+;;                                                          target on canvas)
+;; -- "button-up"           (interp: maybe deselect/unselect rectangle and/or 
+;;                                                          target on canvas)
+;; -- any other mouse event (interp: ignored)
+
+;; world-mev-fn : WorldMouseEvent -> ??
+;(define (world-mev-fn mev)
+;  (cond
+;    [(mouse=? mev "button-down") ...]
+;    [(mouse=? mev "drag")        ...]
+;    [(mouse=? mev "button-up")   ...]
+;    [else ...]))
+
+;; ============================================================================
+
+;; A WorldKeyEvent is a partition of KeyEvent, into following categories:
+;; -- "n"                 (interp: add new eastwardly i.e. towards right
+;;                         moving rectangle at centered at target's center)
+;; -- any other KeyEvent  (interp: ignored)
+
+;; Template:
+;; world-kev-fn : WorldKeyEvent -> ??
+;(define (world-kev-fn kev)
+;  (cond 
+;    [(key=? kev "n")  ...]
+;    [else ...]))
+
+;; ============================================================================
+;; Interfaces: 
+;; World<%> Interface - states methods that each of its implementation
+;;                      classes has to implement
+
+(define World<%>
+  (interface ()
+    
+    ;; -> Void
+    ;; Given: no arguments
+    ;; Effect: updates this World<%> to its state following one tick
+    on-tick                             
+    
+    ;; Integer Integer WorldMouseEvent -> World<%>
+    ;; Given: a mouse location and a mouse event
+    ;; Effect: updates this World to its state following the 
+    ;; given WorldMouseEvent
+    on-mouse
+    
+    ;; WorldKeyEvent -> World<%>
+    ;; Given: a key event
+    ;; Effect: updates this World to its state following the given
+    ;; WorldKeyEvent
+    on-key
+    
+    ;; Scene -> Scene
+    ;; Given: a scene
+    ;; Returns a Scene like the given one, but with this object drawn
+    ;; on it.
+    add-to-scene  
+    
+    ;; -> Integer
+    ;; Given: no arguments
+    ;; Returns: the x and y coordinates of the target in this world
+    get-x
+    get-y
+    
+    ;; -> Boolean
+    ;; Given: no arguments
+    ;; Returns: true iff the target is selected in this world, else return
+    ;; false
+    get-selected?
+    
+    ;; -> ListOf<Rectangle<%>>
+    ;; Given: no arguments
+    ;; Returns: gets the list of rectangles in this world
+    get-rectangles
+    ))
+
+;; ============================================================================
+;; Rectangle<%> Interface:
+
+(define Rectangle<%>
+  (interface ()
+    
+    ;; -> Void
+    ;; Given: no arguments
+    ;; Effect: updates this Rectangle to its state following a tick
+    on-tick                             
+    
+    ;; Integer Integer WorldMouseEvent -> Void
+    ;; Given: a mouse location and a mouse event
+    ;; Effect: updates this Rectangle to its state following the given
+    ;; WorldMouseEvent
+    on-mouse
+    
+    ;; WorldKeyEvent -> Void
+    ;; Given: a key event
+    ;; Effect: updates this Rectangle to its state following the given
+    ;; WorldKeyEvent
+    on-key
+    
+    ;; Scene -> Scene
+    ;; Given: a scene
+    ;; Returns: a Scene like the given one, but with this object drawn
+    ;; on it.
+    add-to-scene
+    
+    ;; -> Integer
+    ;; Given: no arguments
+    ;; Returns: the x and y coordinates of the center of the rectangle
+    get-x
+    get-y
+    
+    ;; -> Boolean
+    ;; Given: no arguments
+    ;; Returns: true iff the rectangle currently selected, else returns false
+    is-selected?
+    
+    ;; -> String
+    ;; Given: no arguments
+    ;; Returns: the color in which this rectangle would be displayed if
+    ;; it were displayed now.
+    get-color
+    ))
+
+;; ============================================================================
+
+;; Subscriber<%> Interface:
+(define Subscriber<%>
+  (interface ()
+    ;; String -> Void
+    ;; Given: a value of color as String,
+    ;; EFFECT: update new color published from buddy
+    color-change
+    ))
+
+;; ============================================================================
+;; CLASS DEFINITION OF WORLD:
+
+;; A World is a (new World% [circle-x Integer] [circle-y Integer] 
+;;                          [circle-selected? Boolean] [x-select Integer] 
+;;                          [y-select Integer]
+;;                          [rectangles ListOf<Rectangle<%>>])
+;; Interpretation:
+;; circle-x: represents the x co-ordinate of the circle i.e. target
+;; circle-y: represents the y co-ordinate of the circle i.e. target
+;; circle-selected?: represents the selection status of the circle. If circle
+;; is selected, then circle-selected? is true, else false
+;; x-select: represents the mouse pointer x co-ordinate iff the circle is 
+;; selected
+;; y-select: represents the mouse pointer y co-ordinate iff the circle is
+;; selected
+;; rectangles: represents a ListOf<Rectangle<%>> which are contained in the
+;; World%
+
+(define World%               ; World% class
+  (class* object% (World<%>)   
+    (init-field circle-x)          ; x co-ordinate of the circle i.e. target
+    (init-field circle-y)          ; y co-ordinate of the circle i.e. target
+    (init-field circle-selected?)  ; selection status of the circle
+    (init-field x-select)    ; x co-ordinate of the mouse if circle selected
+    (init-field y-select)    ; y co-ordinate of the mouse if circle selected
+    (init-field rectangles)  ; ListOf<Rectangle<%>> - list of rectangles
+    
+    ;; Private Field:
+    ;; Image of the circle i.e. target
+    (field [CIRCLE-IMAGE (circle TARGET-RADIUS "outline" "red")])
+    
+    (super-new)
+    
+    ;; on-tick : -> Void
+    ;; GIVEN: no arguments
+    ;; Effect: state of world updates to new state after one tick
+    ;; Examples: see the test suite
+    ;; Strategy: HOFC
+    (define/public (on-tick)
+      (for-each
+       ;; Rectangle% -> Void
+       ;; Given : a rectangle
+       ;; Effect: state of rectangle updates to new state after tick
+       (lambda (rectangle)
+         (send rectangle on-tick)) 
+       rectangles))
+    
+    ;; on-mouse : Integer Integer WorldMouseEvent -> Void
+    ;; GIVEN: x and y co-ordinates of the mouse position and a
+    ;; WorldMouseEvent mev i.e. mouse event
+    ;; Effect: updates this World to its state following the
+    ;; given WorldMouseEvent
+    ;; Examples: see the test suite 
+    ;; Strategy: Structural Decomposition on mev : WorldMouseEvent
+    (define/public (on-mouse mx my mev)
+      (cond
+        [(mouse=? mev "button-up") 
+         (send this world-after-button-up mx my mev)]
+        [(mouse=? mev "button-down") 
+         (send this world-after-button-down mx my mev)]
+        [(mouse=? mev "drag")
+         (send this world-after-drag mx my mev)]
+        [else this]))
+    
+    ;; world-after-button-up : Integer Integer WorldMouseEvent -> Void
+    ;; GIVEN: x and y co-ordinates of the mouse position and a
+    ;; WorldMouseEvent mev
+    ;; Effect: updates this World to its state following the given
+    ;; "button-up" WorldMouseEvent
+    ;; DETAILS: The circle and any Rectangle that is present in the
+    ;; World will be unselected
+    ;; Examples: see the test suite 
+    ;; Strategy: HOFC
+    (define/public (world-after-button-up mx my mev)
+      (begin
+        (set! x-select mx) (set! y-select my)
+        (set! circle-selected? false))
+      (for-each
+       ;; Rectangle% -> Void
+       ;; Given : a rectangle
+       ;; Effect: updates given rectangle to its state given WorldMouseEvent
+       (lambda (rectangle)
+         (send rectangle on-mouse mx my mev))
+       rectangles))
+    
+    ;; world-after-button-down : Integer Integer WorldMouseEvent -> Void
+    ;; GIVEN: x and y co-ordinates of the mouse position and a
+    ;; WorldMouseEvent mev
+    ;; Effect: updates this World to its state following the given
+    ;; "button-down" WorldMouseEvent
+    ;; DETAILS: The circle and the any Rectangle that is present in the
+    ;; selection range will be selected.
+    ;; Other rectangle will remain as they are
+    ;; Examples: see the test suite 
+    ;; Strategy: HOFC
+    (define/public (world-after-button-down mx my mev)
+      (begin
+        (set! x-select mx) (set! y-select my) 
+        (set! circle-selected? (send this circle-after-button-down mx my)))
+      (for-each
+       (lambda (rectangle)
+         ;; Rectangle% -> Void
+         ;; Given : a rectangle
+         ;; Effect: updates given rectangle to its state given WorldMouseEvent
+         (send rectangle on-mouse mx my mev))
+       rectangles))
+    
+    ;; world-after-drag : Integer Integer WorldMouseEvent -> Void
+    ;; GIVEN: x and y co-ordinates of the mouse position and a
+    ;; WorldMouseEvent mev
+    ;; Effect: updates this World to its state following the given
+    ;; "drag" WorldMouseEvent
+    ;; DETAILS: Any rectangle or a circle if selected, are dragged along
+    ;; the mouse pointer, other rectangles or unselected circle
+    ;; remain as they are
+    ;; Examples: see the test suite
+    ;; Strategy: HOFC
+    (define/public (world-after-drag mx my mev)
+      (begin
+        (set! circle-x (send this circle-x-position-after-drag mx))
+        (set! circle-y (send this circle-y-position-after-drag my))
+        (set! x-select mx) (set! y-select my))
+      (for-each
+       ;; Rectangle% -> Void
+       ;; Given : a rectangle
+       ;; Effect: updates given rectangle to its state given WorldMouseEvent
+       (lambda (rectangle)
+         (send rectangle on-mouse mx my mev))
+       rectangles))
+    
+    ;; circle-after-button-down : Integer Integer -> Boolean
+    ;; GIVEN: x and y co-ordinates of the mouse position
+    ;; RETURNS: true iff the mouse position is in the selection range
+    ;; of the circle, else false
+    ;; Examples: see the test suite
+    (define/public (circle-after-button-down mx my)
+      (send this mouse-in-circle-range? mx my))
+    
+    ;; mouse-in-circle-range? : Integer Integer -> Boolean
+    ;; GIVEN: x and y co-ordinates of the mouse position
+    ;; RETURNS: true iff the mouse position is in the selection range
+    ;; of the circle, else false
+    ;; Examples: see the test suite
+    (define/public (mouse-in-circle-range? mx my)
+      (<= (sqrt (+ (sqr (- circle-x mx)) (sqr (- circle-y my)))) TARGET-RADIUS))
+    
+    
+    ;; circle-x-position-after-drag : Integer -> Integer
+    ;; GIVEN: x co-ordinate of the mouse position
+    ;; RETURNS: if circle is selected, returns new x co-ordinate of the circle
+    ;; else returns the same x co-ordinate of the circle
+    ;; Examples: see the test suite
+    (define/public (circle-x-position-after-drag mx)
+      (if circle-selected?
+          (+ circle-x (- mx x-select))
+          circle-x))
+    
+    ;; circle-y-position-after-drag : Integer -> Integer
+    ;; GIVEN: y co-ordinate of the mouse position
+    ;; RETURNS: if circle is selected, returns new y co-ordinate of the circle
+    ;; else returns the same y co-ordinate of the circle
+    ;; Examples: see the test suite
+    (define/public (circle-y-position-after-drag my)
+      (if circle-selected?
+          (+ circle-y (- my y-select))
+          circle-y))
+    
+    
+    ;; on-key: WorldKeyEvent -> Void
+    ;; GIVEN: a key event i.e. WorldKeyEvent
+    ;; Effect: updates this World to its state following the given
+    ;; key event. The World is only responsive to 'n' WorldKeyEvent.
+    ;; Iff key 'n' is pressed, a new rectangle is created, else
+    ;; World remains as is.
+    ;; Examples: see the test suite 
+    ;; STRATEGY: Structural Decomposition on kev : WorldKeyEvent
+    (define/public (on-key kev)
+      (cond
+        [(key=? kev "n") 
+         (set! rectangles (cons
+                           (make-rectangle (send this get-x)
+                                           (send this get-y)
+                                           this)
+                           rectangles))]
+        [else this]))
+    
+    ;; add-to-scene : Scene -> Scene
+    ;; GIVEN: a Scene scene
+    ;; RETURNS: a Scene in which this World is potrayed on the given scene
+    ;; Examples: see the test suite 
+    ;; Strategy: HOFC
+    (define/public (add-to-scene scene)
+      (local
+        ;; first add the target to the scene
+        ((define scene-with-target 
+           (place-image CIRCLE-IMAGE circle-x circle-y EMPTY-CANVAS)))
+        ;; then each rectangle one by one to the scene
+        (foldr
+         ;; Rectangle Scene -> Scene
+         ;; Given: a rectangle and a scene
+         ;; Returns: a scene with given rectangle painted
+         ;; on it.
+         (lambda (r scene)
+           (send r add-to-scene scene))
+         scene-with-target
+         rectangles)))
+    
+    ;; get-x : -> Integer
+    ;; get-y : -> Integer
+    ;; Given: no arguments
+    ;; Returns: the x , y coordinates of the target i.e. center of target
+    ;; circle in this world
+    ;; Examples: 
+    ;; this -> (new World%
+    ;;              [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+    ;;              [x-select 0] [y-select 0] [circle-selected? false]
+    ;;              [rectangles empty]))
+    ;; (send this get-x) -> CANVAS-CENTER-X
+    ;; (send this get-y) -> CANVAS-CENTER-Y
+    (define/public (get-x) circle-x)
+    (define/public (get-y) circle-y)
+    
+    ;; get-selected? : -> Boolean
+    ;; Given: no arguments
+    ;; Returns: true iff the target circle is selected in this world, else return
+    ;; false
+    ;; Examples: 
+    ;; this -> (new World%
+    ;;              [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+    ;;              [x-select 0] [y-select 0] [circle-selected? false]
+    ;;              [rectangles empty]))
+    ;; (send this get-selected?) -> false
+    (define/public (get-selected?) circle-selected?)
+    
+    ;; get-rectangles : -> ListOf<Rectangle%>
+    ;; Given: no arguments
+    ;; Returns: a list of rectangles in this world
+    ;; Examples: 
+    ;; this -> (new World%
+    ;;              [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+    ;;              [x-select 0] [y-select 0] [circle-selected? false]
+    ;;              [rectangles empty]))
+    ;; (send this get-rectangles) -> empty
+    
+    (define/public (get-rectangles) rectangles)
+    
+    ;; Rectangle Number Number ListOf<Subscriber%> -> Void
+    ;; Given: a Rectangle, x and y co-ordinates of the center of the rectangle
+    ;; and the List of Buddies of the given rectangle
+    ;; Effect: updates 'buddies' list of the given rectangle if the rectangle
+    ;; overlaps with any Rectangle present in the World after the given 
+    ;; rectangle is dragged
+    ;; Examples: see the test suite below
+    ;; Design Strategy:  Higher Order Function Composition
+    (define/public (buddies-after-drag rect rect-x rect-y buddies-list)
+      (map
+       ;; Rectangle -> Void
+       ;; Given: a rectangle
+       ;; Effect: updates buddies-list of the given rectangle
+       ;; along with the rectangle with which given rectangle overlaps AND
+       ;; the two overlapping rectangles are not already present in the
+       ;; buddies-list of each other
+       (lambda (r)
+         (if (and (send r rectangles-overlap? rect-x rect-y)
+                  (not (member r buddies-list)))
+             (begin
+               (send rect subscribe r)
+               (send r subscribe rect)
+               (send rect color-change "red"))
+             r))
+       rectangles))
+    ))
+
+;; ============================================================================
+;; CLASS DEFINITION FOR RECTANGLE:
+
+;; A Rectangle is a (new Rectangle% [x Integer] [y Integer] [mx Integer]
+;;                                  [my Integer] [color String]
+;;                                  [world-obj World%] [selected? Boolean])
+;; Interpretation:
+;; x: is Integer and represents the x co-ordinate of the center of the Rectangle
+;; y: is Integer and represents the y co-ordinate of the center of the Rectangle
+;; mx : a x coordinate of a mouse position
+;; my : a y coordinate of a mouse position
+;; color: a String which represents the color with which the Rectangle is to be
+;; displayed
+;; world-obj: World% Object that this rectangle is a part of 
+;; selected?: is a boolean and represents the selection status of the Rectagle
+;; If Rectangle is selected, selected? is true, else false
+
+(define Rectangle%                 
+  (class* object% (Rectangle<%> Subscriber<%>)
+    ; Rectangle% class implements Rectangle<%> and Subscriber<%> interface
+    (init-field
+     x                 ; x co-ordinate of the center of rectangle
+     y                 ; y co-ordinate of the center of rectangle
+     mx                ; x co-ordinate of the mouse position
+     my                ; y co-ordinate of the mouse position
+     color             ; color with which the rectangle is to be displayed
+     buddies           ; List of Buddies of the rectangle
+     world-obj)        ; World Object that this rectangle is a part of           
+    (init-field [selected? false]) ; default selection status is false
+    
+    (super-new)
+    
+    ;; Rectangle% -> Void
+    ;; Given: a rectangle which wants to be buddy with this rectangle
+    ;; Effect: the buddy-list of the current rectangle is updated 
+    ;; by adding the given rectangle to its list.
+    ;; Examples: 
+    ;; (define w1 (make-world))
+    ;; this -> 
+    ;; (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1)
+    ;; rect2 -> (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1)
+    ;; (send subscribe rect2)
+    ;; -> rect2 gets added to buddies list of this rectangle
+    (define/public (subscribe subscriber)
+      (set! buddies (cons subscriber buddies)))
+    
+    ;; String -> Void
+    ;; Given: a value of color as String, 
+    ;; Effect: the color value of each rectangle in the buddies
+    ;; of this Rectangle is updated
+    ;; Examples: see the test suite below
+    ;; Strategy: Higher order function composition
+    (define/public (color-change val)
+      (for-each
+       ;; Rectangle% -> Void
+       ;; Given: a rectangle
+       ;; Effect: updates the color of given rectangle to the given value val
+       (lambda (obj)
+         (send obj change-color-of-buddy val))
+       buddies))
+    
+    ;; String -> Void
+    ;; Given: a value of color as String, 
+    ;; Effect: the color value of each rectangle is updated to the given val
+    ;; Examples: see the test suite below
+    (define/public (change-color-of-buddy val)
+      (set! color val))
+    
+    
+    ;; on-tick : -> Void
+    ;; GIVEN: no arguments
+    ;; Effect: state of this rectangle is updated to new state after tick
+    ;; Examples: See the test suite below
+    (define/public (on-tick)
+      this) 
+    
+    ;; on-key : WorldKeyEvent -> Void
+    ;; GIVEN: a key event WorldKeyEvent
+    ;; Effect: updates this Rectangle to its state following the given
+    ;; key event
+    ;; Examples: 
+    ;; (define w1 (make-world))
+    ;; (define r1 (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1))
+    ;; say, this -> r1
+    ;; (send this on-key " ") -> this (which is r1) 
+    (define/public (on-key kev) this)    
+    
+    ;; on-mouse : Integer Integer WorldMouseEvent -> Void
+    ;; GIVEN: x and y co-ordinate of the mouse position and a WorldMouseEvent
+    ;; Effect: updates this Rectangle to its state following the given
+    ;; WorldMouseEvent
+    ;; Examples: see the tests below
+    ;; DESIGN STRATEGY: Structural Decomposition on mev : WorldMouseEvent
+    (define/public (on-mouse mouse-x mouse-y mev)
+      (cond
+        [(mouse=? mev "button-down")
+         (send this rectangle-after-button-down mouse-x mouse-y)]
+        [(mouse=? mev "drag") 
+         (send this rectangle-after-drag mouse-x mouse-y)]
+        [(mouse=? mev "button-up")
+         (send this rectangle-after-button-up)]
+        [else this]))
+    
+    ;; rectangle-after-button-down : Integer Integer -> Void
+    ;; GIVEN: the location of a mouse pointer in terms of x and y co-ordinates
+    ;; Effect: updates this Rectangle to its state following the given
+    ;; buton-down WorldMouseEvent
+    ;; DETAILS:  If the event is inside the rectangle, returns
+    ;; a rectangle just like this one, except that it is
+    ;; selected.  Otherwise returns the rectangle unchanged.
+    ;; Examples: see the tests below    
+    (define/public (rectangle-after-button-down mouse-x mouse-y)
+      (if (send this mouse-in-rect? mouse-x mouse-y)
+          (begin
+            (set! mx mouse-x) (set! my mouse-y) 
+            (set! selected? true)
+            (set! color "red") (send this color-change "red"))
+          this))
+    
+    ;; rectangle-after-drag : Integer Integer -> Void
+    ;; Given: x and y positions of mouse after drag event
+    ;; Effect: updates this Rectangle to its state following the given
+    ;; drag mouse event. 
+    ;; DETAILS: If the rectangle is already selected, then the 
+    ;; rectangle will be dragged along the mouse-pointer, 
+    ;; else the position of this rectangle will remain unchanged
+    ;; Examples: see the tests below
+    
+    (define/public (rectangle-after-drag mouse-x mouse-y)
+      (if selected?
+          (begin 
+            (set! x (+ x (- mouse-x mx)))
+            (set! y (+ y (- mouse-y my)))
+            (set! mx mouse-x) (set! my mouse-y) 
+            (set! selected? true)
+            (send world-obj buddies-after-drag this x y buddies))
+          this))
+    
+    ;; rectangle-after-button-up : -> Void
+    ;; Given: no arguments
+    ;; Effect: updates this Rectangle to its state following the given
+    ;; button-up mouse event. 
+    ;; DETAILS: The button-up mouse event unselects any selected
+    ;; rectangle and has no effect on any already un-selected rectangle
+    ;; Examples: see the tests below
+    
+    (define/public (rectangle-after-button-up)
+      (begin
+        (set! selected? false)
+        (set! color "green")
+        (send this color-change "green")))
+    
+    ;; add-to-scene : Scene -> Scene
+    ;; GIVEN: a scene
+    ;; RETURNS: a scene same as given, only this Rectangle is potrayed on the
+    ;; given Scene
+    ;; Examples: 
+    ;; this -> 
+    ;; (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y)
+    ;; (send this add-to-scene EMPTY-CANVAS) -> 
+    ;;   (place-image 
+    ;;     (rectangle RECTANGLE-WIDTH RECTANGLE-HEIGHT "outline" "green")
+    ;;     CANVAS-CENTER-X
+    ;;     CANVAS-CENTER-Y
+    ;;     EMPTY-CANVAS)
+    
+    (define/public (add-to-scene scene)
+      (place-image 
+       (rectangle RECTANGLE-WIDTH RECTANGLE-HEIGHT "outline" color)
+       x y scene))
+    
+    ;; mouse-in-rect? : Integer Integer -> Boolean
+    ;; GIVEN: x and y locations of the mouse
+    ;; RETURNS: true iff the location is inside this rectangle,
+    ;; else returns false.
+    ;; Examples: 
+    ;; (define w1 (make-world))
+    ;; this -> 
+    ;; (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1)
+    ;; (send this mouse-in-rect? CANVAS-CENTER-X CANVAS-CENTER-Y) -> 
+    ;;   true
+    (define/public (mouse-in-rect? mouse-x mouse-y)
+      (and
+       (<= 
+        (- x HALF-RECTANGLE-WIDTH)
+        mouse-x
+        (+ x HALF-RECTANGLE-WIDTH))
+       (<= 
+        (- y HALF-RECTANGLE-HEIGHT)
+        mouse-y
+        (+ y HALF-RECTANGLE-HEIGHT))))
+    
+    ;; get-x : -> Integer
+    ;; get-y : -> Integer
+    ;; Given: no arguments
+    ;; Returns: the x , y coordinates of the center of this rectangle
+    ;; Examples:
+    ;; (define w1 (make-world))
+    ;; this -> 
+    ;; (make-rectangle 0 30 w1)
+    
+    ;; (send this get-x) -> 0
+    ;; (send this get-y) -> 30
+    (define/public (get-x) x)
+    (define/public (get-y) y)
+    
+    ;; is-selected? : -> Boolean
+    ;; Given: no arguments
+    ;; Returns: true iff this rectangle is selected, else return
+    ;; false
+    ;; Examples: 
+    ;; (define w1 (make-world))
+    ;; this -> 
+    ;; (make-rectangle 0 30 w1)
+    ;; (send this is-selected?) -> false
+    (define/public (is-selected?) selected?)
+    
+    ;; -> String
+    ;; Given: no arguments
+    ;; RETURNS: either "red" or "green", depending on the color in
+    ;; which this rectangle would be displayed if it were displayed now.
+    ;; Examples:
+    ;; (define w1 (make-world))
+    ;; this -> 
+    ;; (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1)
+    ;; (send this get-color) -> "green"
+    (define/public (get-color)
+      color)
+    
+    ;; Number Number -> Boolean
+    ;; Given: x,y coordinates of the other Rectangle
+    ;; Returns: true iff this rectangle overlaps with the given Rectangle
+    ;; else false
+    ;; Examples:
+    ;; (define w1 (make-world))
+    ;; this -> 
+    ;; (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1)
+    ;; 
+    ;; (send this rectangles-overlap? CANVAS-CENTER-X CANVAS-CENTER-Y) -> true
+    (define/public (rectangles-overlap? rect-x rect-y)
+      (and
+       (<= (abs (- rect-x x)) RECTANGLE-WIDTH)
+       (<= (abs (- rect-y y)) RECTANGLE-HEIGHT)))
+    ))
+
+;; ============================================================================
+;; make-rectangle : Integer Integer World% -> Rectangle%
+;; Given: a x and y positions of center of target circle, and 
+;; world instance of which this rectangle is part of
+;; Returns: an unselected rectangle created centered at the given target's
+;; center 
+;; Examples: 
+;; (define w1 (make-world)) ->
+;;  (new World%
+;;       [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+;;       [x-select 0] [y-select 0] [circle-selected? false]
+;;       [rectangles empty])
+
+;; (make-rectangle 10 10 w1) ->
+;;  (new Rectangle% 
+;;       [x 10] [y 10] [mx 0] [my 0]
+;;       [color "green"] [buddies empty]
+;;       [world-obj w1])
+
+;; Strategy : Domain Knowledge
+(define (make-rectangle x y world-obj)
+  (new Rectangle% 
+       [x x] [y y] [mx 0] [my 0]
+       [color "green"] [buddies empty] 
+       [world-obj world-obj]))
+;; Tests: see the test-suite below
+;; ============================================================================
+;; make-world : -> World%
+;; Given: no arguments
+;; Returns: Creates a world with no rectangles
+
+;; Examples: 
+;; (make-world) ->
+;;  (new World%
+;;       [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+;;       [x-select 0] [y-select 0] [circle-selected? false]
+;;       [rectangles empty])
+
+;; Strategy : Domain Knowledge
+(define (make-world)
+  (new World%
+       [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+       [x-select 0] [y-select 0] [circle-selected? false]
+       [rectangles empty]))
+;; Tests: see the test-suite below
+;; ============================================================================
+;; run : PosNum -> World%
+;; Given: a frame rate (in seconds/tick),
+;; Details: creates and runs a world.  Returns the final state of the world
+;; EFFECT: runs an initial world at the given frame rate
+;; RETURNS: the final state of the world
+;; Design Strategy: Function Composition
+(define (run rate)
+  (big-bang (make-world)
+            (on-tick
+             ;; World -> Void
+             ;; Given: a world
+             ;; EFFECT: updates the state of the given World 
+             ;; after on-tick event
+             (lambda (w) (send w on-tick) w) rate)
+            (on-key
+             ;; World -> Void
+             ;; Given: a world
+             ;; EFFECT: updates the state of the given World 
+             ;; after on-key event
+             (lambda (w kev) (send w on-key kev) w))
+            (on-mouse
+             ;; World -> Void
+             ;; Given: a world
+             ;; EFFECT: updates the state of the given World 
+             ;; after on-mouse event
+             (lambda (w mx my mev) (send w on-mouse mx my mev) w))
+            (to-draw
+             ;; World -> Scene
+             ;; Given: a world
+             ;; Returns: a scene with given world drawn on it
+             (lambda (w) (send w add-to-scene EMPTY-CANVAS)))))
+
+;; ============================================================================
+;; target-similar? : World% World% -> Boolean 
+;; Given: two worlds
+;; Returns: true iff targets in both worlds have same observable behaviours
+;; else return false
+;; Examples:
+;; (define t1 (new World%
+;;                  [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+;;                  [x-select 0] [y-select 0] [circle-selected? false]
+;;                  [rectangles empty]))
+;; (define t2 (new World%
+;;                  [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+;;                  [x-select 0] [y-select 0] [circle-selected? false]
+;;                  [rectangles empty]))
+
+;; (target-similar? t1 t2) -> true
+
+;; Design Strategy: Function Composition
+(define (target-similar? w1 w2)
+  (and
+   (equal? (send w1 get-x) (send w2 get-x))
+   (equal? (send w1 get-y) (send w2 get-y))
+   (equal? (send w1 get-selected?) (send w2 get-selected?))))
+;; Tests: see the test-suite below
+;; ============================================================================
+;; rectangle-similar? : Rectangle% Rectangle% -> Boolean 
+;; Given: two rectangle
+;; Returns: true iff both rectangles have same observable behaviours, else
+;; return false
+
+;; Examples: 
+;; (define w1 (make-world))
+;; (define r1 (new Rectangle% 
+;;        [x 1] [y 65] [mx 0] [my 0]
+;;        [color "green"] [buddies empty] 
+;;        [world-obj w1])
+
+;; (define r2 (new Rectangle% 
+;;        [x 2] [y 23] [mx 0] [my 0]
+;;        [color "green"] [buddies empty] 
+;;        [world-obj w1])
+
+;; (rectangle-similar? r1 r2) -> false
+
+;; Design Strategy: Function Composition
+(define (rectangle-similar? r1 r2)
+  (and 
+   (equal? (send r1 get-x) (send r2 get-x))
+   (equal? (send r1 get-y) (send r2 get-y))
+   (equal? (send r1 is-selected?) (send r2 is-selected?))
+   (equal? (send r1 get-color) (send r2 get-color))))
+;; Tests: see the test-suite below
+;; ============================================================================
+;; world-similar? : World% World% -> Boolean
+;; Given : two worlds
+;; Returns: true iff both world's behavioural properties are the same 
+;; Examples: 
+;; (define w1 (new World%
+;;                  [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+;;                  [x-select 0] [y-select 0] [circle-selected? false]
+;;                  [rectangles empty]))
+;; (define w2 (new World%
+;;                  [circle-x CANVAS-CENTER-X] [circle-y CANVAS-CENTER-Y] 
+;;                  [x-select 0] [y-select 0] [circle-selected? false]
+;;                  [rectangles empty]))
+
+;; (world-similar? w1 w2) -> true
+
+;; Design Strategy: Function Composition
+(define (world-similar? w1 w2)
+  (and
+   (target-similar? w1 w2)
+   (andmap
+    (lambda (r1 r2) (rectangle-similar? r1 r2))
+    (send w1 get-rectangles)
+    (send w2 get-rectangles))))
+
+;; Tests: see test suite below
+;; ============================================================================
+;; Examples for tests
+(define scene-with-everything-at-center-unselected
+  (place-image 
+   (rectangle RECTANGLE-WIDTH RECTANGLE-HEIGHT "outline" "green")
+   CANVAS-CENTER-X CANVAS-CENTER-Y
+   (place-image (circle TARGET-RADIUS "outline" "red")
+                CANVAS-CENTER-X CANVAS-CENTER-Y EMPTY-CANVAS)))
+
+;; ============================================================================
+"Test for stateful World and Rectangle"
+(define-test-suite world-tests
+  ;; two different world comparision
+  (test-begin 
+   (define w1 (make-world))
+   (define w2 (make-world))
+   (send w1 on-key " ")
+   (check world-similar? w1 w2
+          "A world is similar? to itself"))
+  
+  ;; World after after tick and after adding rectangle by pressing "n" key
+  (test-begin
+   (define w1 (make-world))
+   (define w2 (make-world))
+   (send w1 on-key "n")
+   (send w1 on-tick)
+   (check-not-eqv? w1 w2
+                   "After tick, both worlds are not similar"))
+  
+  ;; button down outside rectangle
+  (test-begin
+   (define w1 (make-world))
+   (define w2 (make-world))
+   (send w1 on-key "n")
+   (send w2 on-key "n")
+   (send w1 on-mouse CANVAS-TOP-CORNER-X CANVAS-TOP-CORNER-Y "button-down")
+   (check world-similar? w1 w2
+          "test for button down mouse event, both worlds are similar"))
+  
+  ;; world with single rectangle after tick when rectangle is selected
+  (test-begin
+   (define w1 (make-world))
+   (define w2 (make-world))
+   (send w1 on-key "n")
+   (send w2 on-key "n")
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "button-down")
+   (send w2 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "button-down")
+   ;; w1 world is with one rectangle and it is selected
+   ;; w2 world is with one rectangle and it is selected and 
+   ;; after on-tick i.e. after one tick 
+   (send w2 on-tick)
+   (check world-similar? w1 w2
+          "test for ontick event, both worlds are similar"))
+  
+  ;; drag the rectangle
+  (test-begin
+   (define w1 (make-world))
+   (define w2 (make-world))
+   (send w1 on-key "n")
+   (send w2 on-key "n")
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "drag")
+   ;; w1 world is with one rectangle
+   ;; w2 world is with one rectangle and mouse is dragged, here 
+   ;; rectangle inside in this world was not selected
+   (check world-similar? w1 w2
+          "tests for drag event, both worlds are similar"))
+  
+  ;; test case for ignored mouse events i.e. any other mouse event than drag,
+  ;; button down and up
+  (test-begin
+   (define w1 (make-world))
+   (define w2 (make-world))
+   (send w1 on-key "n")
+   (send w2 on-key "n")
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "move")
+   ;; w1 world is with one rectangle
+   ;; w2 world is with one rectangle and mouse is moved
+   (check world-similar? w1 w2
+          "tests for ignored mouse event, both worlds are similar"))
+  
+  ;; test case for add-to-scene function
+  (test-begin
+   (define w1 (make-world))
+   (send w1 on-key "n")
+   (define w1-scene (send w1 add-to-scene EMPTY-CANVAS))
+   (check-equal? w1-scene
+                 scene-with-everything-at-center-unselected
+                 "Scene for world with single unselected rectangle
+                  is incorrect"))
+  
+  ;; test case for get-x function
+  (test-begin
+   (define w1 (make-world))
+   (send w1 on-key "n")
+   (check-equal? (send w1 get-x)
+                 CANVAS-CENTER-X
+                 "Target circle's x-position is at CANVAS-CENTER-X"))
+  
+  ;; test case for get-y function
+  (test-begin
+   (define w1 (make-world))
+   (send w1 on-key "n")
+   (check-equal? (send w1 get-y)
+                 CANVAS-CENTER-Y
+                 "Target circle's y-position is at CANVAS-CENTER-Y"))
+  
+  ;; test case for get-selected? function
+  (test-begin
+   (define w1 (make-world))
+   (send w1 on-key "n")
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "button-down")
+   (check-equal? (send w1 get-selected?) true
+                  "Target circle is selected"))
+  
+  ;; tests for combination of button up and button down and drag
+  (test-begin
+   (define w1 (make-world))
+   (send w1 on-key "n")
+   (define w2 (make-world))
+   (send w2 on-key "n")   ;; A world with single rectangle
+   ;; select rectangle from above world with single rectangle
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "button-down")
+   ;; drag above selected rectangle to right wall of canvas
+   (send w1 on-mouse (- CANVAS-WIDTH HALF-RECTANGLE-WIDTH) 
+         CANVAS-CENTER-Y "drag")
+   ;; unselect the above selected rectangle
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "button-up")
+   
+   ;; Select above rectangle again
+   (send w1 on-mouse (- CANVAS-WIDTH HALF-RECTANGLE-WIDTH)
+         CANVAS-CENTER-Y "button-down")
+   ;; drag above rectangle, now to left wall of canvas
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "drag")
+   ;; unselect it now
+   (send w1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "button-up")
+   
+   ;; Compare above world with constant world defined above in examples
+   (check world-similar? w2 w1
+          "tests for combination of button up and button down and drag,
+           both worlds are not similar"))
+  
+  ;; test case for ignored mouse events i.e. any other key event than "n"
+  (test-begin
+   (define w1 (make-world))
+   (define rect1 (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1))
+   (define rect2 (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1))
+   (send rect1 on-key "t")
+   (check rectangle-similar? rect1 rect2
+          "tests for ignored key event, both worlds are similar"))
+  
+  ;; test case for ignored mouse events i.e. any other mouse event than drag,
+  ;; button down and up
+  (test-begin
+   (define w1 (make-world))
+   (define rect1 (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1))
+   (define rect2 (make-rectangle CANVAS-CENTER-X CANVAS-CENTER-Y w1))
+   (send rect1 on-mouse CANVAS-CENTER-X CANVAS-CENTER-Y "move")
+   (check rectangle-similar? rect1 rect2
+          "both rectangles are same")))
+;; ============================================================================
+(run-tests world-tests)
+;; ============================================================================

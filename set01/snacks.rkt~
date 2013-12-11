@@ -1,0 +1,34 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname snacks) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+(define-struct machine (chocoloate-bars carrot-packages bank))
+
+;; A Machine is a 
+;; (make-machine PosNum PosNum PosNum)
+;; Interp:
+;; chocoloate-bars : The no of chocolate bars in the machine
+;; carrot-packages : The no of carrot packages in the machine
+;; bank : The container in the machine where all the money is
+
+;; template
+;; machine-fn : machine -> ??
+(define (machine-fn m)
+  (... (machine-chocoloate-bars m)
+       (machine-carrot-packages m)
+       (machine-bank m)
+  )
+)
+
+;; initial-machine : Number Number -> Machine
+;; GIVEN: the number of chocolate bars and the number of packages of
+;; carrot sticks
+;; RETURNS: a machine loaded with the given number of chocolate bars and
+;;          carrot sticks, with an empty bank.
+;; EXAMPLES :
+;; (initial-machine 200 300) -> make-machine 200 300 
+;; (initial-machine 10 50) -> make-robot 10 50 "NORTH"
+(define (initial-machine cb cp )
+  (cond
+    []
+    )
+  )

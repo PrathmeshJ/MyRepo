@@ -1,0 +1,111 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname pitchers) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t write repeating-decimal #f #t none #f ())))
+
+(define-struct pitcher (contents capacity))
+;; A Pitcher is a (make-pitcher PosInt PosInt)
+;; Interpretation
+;; contents is the contents that are currently filled in the pitcher
+;; capacity is the total amount of liquid that a pitcher can hold
+;;
+;;template
+;;pitcher-fn : Pitcher -> ??
+;;(define (pitcher-fn p)
+;;  (...
+;;   (pitcher-contents p)
+;;   (pitcher-capacity p)))
+
+
+;; -----------------------------------------------------------------------------
+(define-struct move (src tgt))
+;; A Move is a (make-move PosInt PosInt)
+;; WHERE: src and tgt are different
+;; INTERP: (make-move i j) means pour from pitcher i to pitcher j.
+;; template
+;;move-fn : Move -> ??
+;;(define (move-fn m)
+;;  (...
+;;   (move-src m)
+;;   (move-tgt m)))
+
+;;A ListOfPitcher (LOP) is either
+;;-- empty                    [interp: the list of pitcher is empty]
+;;-- (cons Pitcher LOP)       [interp : list of picher or LOP]
+
+;;template 
+;;lop-fn : LOP -> ??
+;;(define (lop-fn lst)
+;;  (cond
+;;    [(empty? lop) ...]
+;;    [else (... (first lop)
+;;               (lop-fn (rest lop)))]))
+
+;; A ListRep is a non-empty ListOfPitcher 
+
+;; =============================================================================
+;;                               list-to-pitchers
+;; =============================================================================
+;; list-to-pitchers : ListRep -> Pitchers
+;; GIVEN : A list representation
+;; RETURNS: your internal representation of the given input.
+;; WHERE :
+;; EXAMPLES :
+;; STRATEGY : FUNCTION COMPOSITION
+(define (list-to-pitchers lr)
+  (list-to-pitchers-helper lr 1))
+
+
+;; -----------------------------------------------------------------------------
+;; list-to-pitchers-helper : ListRep PosInt -> ListOf<Pitcher>
+;; GIVEN : A list representationa and a positive integer
+;; RETURNS : A list of Pitchers
+;; EXAMPLES :
+;; STRATEGY : STRUCURAL DECOMPOSITION of ListRep
+(define (list-to-pitchers-helper lr index)
+  (cond
+  [(empty? lr) empty]
+  [else  (cons (make-pitcher index (first lr) (first (second (lr))))
+         (list-to-pitchers-helper (rest lr) (+ 1 index)))]))
+
+
+;; =============================================================================
+;;                              pitchers-to-list
+;; =============================================================================
+;; pitchers-to-list : Pitchers -> ListRep
+;; GIVEN: an internal representation of a set of pitchers
+;; RETURNS: a ListRep that represents them.
+;; EXAMPLES : 
+;; STRATEGY : 
+
+(define (pitchers-to-list ps)
+  (cond
+    [(empty? ps) empty]
+    [else (cons (list (pitcher-contents (first ps))
+                      (pitcher-capacity (first ps)))
+                (pitchers-to-list (rest ps)))]))
+
+;; -----------------------------------------------------------------------------
+;; 
+;; pitchers-after-moves : Pitchers ListOf<Move> -> Pitchers
+;; GIVEN: An internal representation of a set of pitchers, and a sequence
+;; of moves
+;; WHERE: every move refers only to pitchers that are in the set of pitchers.
+;; RETURNS: the internal representation of the set of pitchers that should
+;; result after executing the given list of moves, in order, on the given
+;; set of pitchers.
+;;
+
+
+
+
+;; -----------------------------------------------------------------------------
+;; make-move : PosInt PosInt -> Move
+;; GIVEN : A source and a target
+;; WHERE the two arguments are not equal
+;; RETURNS: a move with the given numbers as its source and target,
+;; respectively. 
+;; 
+;; -----------------------------------------------------------------------------
+;; move-src : Move -> PosInt
+;; move-tgt : Move -> PosInt
+;; RETURNS: the pitcher numbers of the source or target of the move.

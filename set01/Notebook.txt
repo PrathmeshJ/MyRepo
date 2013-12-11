@@ -1,0 +1,36 @@
+DATE		WHO	Start		Stop		Interruption		Question        TimeOnTask            Comments
+
+20-Sep		PJ	13:35		17:10		30+10			1	              3:10           studied the statement and started working	
+21-Sep		PJ	11.57		14:18		15			1	              2:00           implemented few functions
+***************************************************Commiting to GitHub at 21-Sep 14:23***********************************************************************
+21-Sep		PJ	15:45		17:06		15			1                     1:11
+21-Sep		PJ	15:34		16:15					2                     0:45
+***************************************************Commiting to GitHub at 21-Sep 23:40***********************************************************************
+
+22-Sep		PJ	10:40		13:40		20			1	              3:00                     
+22-Sep		PJ	19:10		22:45		30			3	              3:30	              Done with question 3
+***************************************************Commiting to GitHub at 22-Sep 23:10 ***********************************************************************
+23-Sep		PJ	8:50		10:40		10			2		      1:50                     
+23-Sep		PJ	11:50		13:10		10			1	              1:20                  Changes in the functions
+23-Sep		PJ	15:20		17:35		10			4	              2:00                  Started with question 4
+23-Sep		PJ	21:05		03:20		40+20+15	        1                    6:20                  Finalized the solution
+***************************************************Commiting to GitHub at 24-Sep 4:43 ************************************************************************
+24-Sep		PJ	13:20		16:15		20			4		      3:00                   Completed question 4 
+24-Sep		PJ	16:45		18:20		10			2		      1:40                   Completed question 2
+24-Sep		PJ	23:10		1:40		30+10			1		      2:30                   Finalized functions
+***************************************************Commiting to GitHub at 25-Sep 2:10 ***********************************************************************
+25-Sep         PJ	15:00		17:03				   1			0:30			Executing tests	
+25-Sep         PJ	15:00		17:03				   2			0:30			Executing tests	
+25-Sep         PJ	15:00		17:03				   3			0:30			Executing tests	
+25-Sep         PJ	15:00		17:03	     			   4			0:30			Executing tests						***************************************************Commiting to GitHub at 25-Sep 15:05 ***********************************************************************	
+
+
+Total Time On Task Q1 (minutes)                  820 
+Total Time On Task Q2 (minutes)                  220
+Total Time On Task Q3 (minutes)                  240
+Total Time On Task Q4 (minutes)                  340 
+TOTQ1 (hours and tenths)                         13.4 
+TOTQ2 (hours and tenths)                         3.4											
+TOTQ3 (hours and tenths)                         4.0 
+TOTQ4 (hours and tenths)                         5.5		
+

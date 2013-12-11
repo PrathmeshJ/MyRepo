@@ -1,0 +1,66 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname rectangle) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+;; start with (main 0)
+
+(require rackunit)
+(require rackunit/text-ui)
+(require 2htdp/universe)
+(require 2htdp/image)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; MAIN FUNCTION.
+
+;run : Any -> World
+;GIVEN: any value
+;EFFECT: Ignores its argument and runs the world.
+;RETURNS: the final state of the world.
+
+(define (run initial-pos)
+  (big-bang (initial-world initial-pos)
+            (on-tick world-after-tick 0.5)
+            (on-draw world-to-scene)
+            (on-key world-after-key-event)
+            (on-mouse world-after-mouse-event)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; CONSTANTS
+
+(define RECT-IMAGE (bitmap "cat.png"))
+
+;; how fast the cat falls, in pixels/tick
+(define CATSPEED 8)
+
+;; dimensions of the canvas
+(define CANVAS-WIDTH 450)
+(define CANVAS-HEIGHT 400)
+(define EMPTY-CANVAS (empty-scene CANVAS-WIDTH CANVAS-HEIGHT))
+(define CAT1-X-COORD (/ CANVAS-WIDTH 3))
+(define CAT2-X-COORD (* 2 CAT1-X-COORD))
+
+;; dimensions of the cat
+(define HALF-RECTANGLE-WIDTH  (/ (image-width  RECT-IMAGE) 2))
+(define HALF-RECTANGLE-HEIGHT (/ (image-height RECT-IMAGE) 2))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+;
+;initial-world : Any -> World
+;GIVEN: any value
+;RETURNS: the initial world.
+;Ignores its argument.
+;
+;world-to-center : World -> Posn
+;GIVEN: a world
+;RETURNS: the coordinates of the center of the rectangle as a Posn
+;
+;world-selected? : World -> Boolean
+;GIVEN a world
+;RETURNS: true iff the rectangle is selected.
+;
+;world-after-mouse-event : World Number Number MouseEvent -> World
+;RETURNS: the world that follows the given mouse event.

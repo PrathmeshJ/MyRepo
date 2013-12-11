@@ -1,0 +1,135 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname robot.rtk) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+(define-struct robot (xcoordinate ycoordinate direction))
+
+;; A Robot is a 
+;; (make-robot Integer Integer String)
+;; Interp:
+;; xcoordinate, ycoordinate is the coordinates where the robot is placed with
+;; its center on the coordinates in cm
+
+;; template
+;; robot-fn : Robot -> ??
+(define (robot-fn r)
+  (... (robot-xcoordinate r)
+       (robot-ycoordinate r)
+       (robot-direction r)
+  )
+)
+
+;; initial-robot : PosInt PosInt -> Robot
+;; GIVEN: a set of (x,y) coordinates
+;; RETURNS: a robot with its center at those coordinates, facing north
+;; (up).
+;; EXAMPLES :
+;; (initial-robot 200 300) -> make-robot 200 300 "NORTH"
+;; (initial-robot 10 50) -> make-robot 10 50 "NORTH"
+(define (initial-robot x y )
+  (cond
+    [(or (< y -15) (> y 415)) (make-robot x y "NORTH") ]
+    [(or (< x -15) (> x 215)) (make-robot x y "NORTH") ]
+    [(or (and (< x 15) (> x -15)) (and (< x 215) (> x 185)))
+         (on-y-boundary x y) ]
+    [(or (and (< y 15) (> y -15)) (and (< y 415) (> y 385)))
+         (on-x-boundary x y) ]
+    [else (make-robot x y "NORTH")]
+    )
+  )
+
+;; on-y-boundary : Integer Integer -> Robot
+;; GIVEN : The coordinates of the center of the robot
+;; RETURNS : The coordinates where the valid position of the robot is going to placed
+;; EXAMPLES : 
+;; (on-y-boundary 190 300) -> make-robot 185 300 "NORTH"
+;; (on-y-boundary 10 300) -> make-robot 15 300 "NORTH"
+;; (on-y-boundary -10 300) -> make-robot 15 300 "NORTH"
+;; (on-y-boundary 210 300) -> make-robot 185 300 "NORTH"
+
+(define (on-y-boundary x y)
+  (cond
+    [(and (or (<= x 215) (>= x 185)) (or (<= y 415) (>= y 385))) (make-robot 185 385 "NORTH")]
+    [(or (<= x 15) (>= x -15)) (make-robot 15 y "NORTH")]
+    )
+  )
+
+;; on-x-boundary : Integer Integer -> Robot
+;; GIVEN : The coordinates of the center of the robot
+;; RETURNS : The coordinates where the valid position of the robot is going to placed
+;; EXAMPLES : 
+;; (on-x-boundary 150 410) -> make-robot 150 385 "NORTH"
+;; (on-x-boundary 150 390) -> make-robot 150 385 "NORTH"
+;; (on-x-boundary 150 -15) -> make-robot 150 15 "NORTH"
+;; (on-x-boundary 150 15) -> make-robot 150 15 "NORTH"
+
+(define (on-x-boundary x y)
+  (cond
+    [(or (<= y 415) (>= y 385)) (make-robot x 385 "NORTH")]
+    [(or (<= y 15) (>= y -15)) (make-robot x 15 "NORTH")]
+    )
+  )
+
+ 
+;(initial-robot 210 410)
+
+;;; robot-left : Robot -> Robot
+;;; GIVEN : A robot in a particular direction
+;;; RETURNS : The robot facing in the new direction in the left
+;;; EXAMPLES :
+;;; (robot-left (robot (200,200,NORTH) robot(200,200,WEST))
+;;; (robot-left (robot (200,200,SOUTH) robot(200,200,EAST))
+;;; Strategy : Domain Knowledge
+(define ( robot-left x y dir)
+  ( cond
+    [(string=? dir "NORTH") (make-robot x y "WEST")]
+    [(string=? dir "WEST") (make-robot x y "SOUTH")]
+    [(string=? dir "SOUTH") (make-robot x y "EAST")]
+    [(string=? dir "EAST") (make-robot x y "NORTH")]
+    )
+  )
+
+;;; robot-right : Robot -> Robot
+;;; GIVEN : A robot in a particular direction
+;;; RETURNS : The robot facingin the new direction in the right
+;;; EXAMPLES :
+;;; (robot-right (robot (200,200,NORTH) robot(200,200,EAST))
+;;; (robot-right (robot (200,200,SOUTH) robot(200,200,WEST))
+;;; Strategy : Domain Knowledge
+(define ( robot-right x y dir)
+  ( cond
+    [(string=? dir "NORTH") (make-robot x y "EAST")]
+    [(string=? dir "WEST") (make-robot x y "NORTH")]
+    [(string=? dir "SOUTH") (make-robot x y "WEST")]
+    [(string=? dir "EAST") (make-robot x y "SOUTH")]
+    )
+  )
+
+;;; robot-forward : robot PosInt -> robot
+;;; GIVEN: a robot and a distance to move
+;;; RETURNS: the robot now placed at the specified distance
+;;; STRATEGY: domain knowledge
+;;; EXAMPLES :
+;;; (robot-forward (robot(200 200 NORTH) 10) robot(200 210 NORTH)) 
+;;; (robot-forward (robot(200 200 SOUTH) 10) robot(200 190 SOUTH))
+;;; (robot-forward (robot(200 200 EAST) 10) robot(210 200 EAST))
+;;; (robot-forward (robot(200 200 WEST) 10) robot(190 200 WEST))
+;  
+(define (robot-forward x y dir d) 
+  (cond
+    [(and (string=? dir "NORTH") (> y 400) (and (>= x 15) (<= x 185)) ) "Go to possible moves" ] ;inside the canvas
+    [(and (string=? dir "NORTH") (> y 400) (or (< x 0) (> x 185)))
+     (make-robot x (- y d) "NORTH" )]; outside the canvas walls
+    [(and (string=? dir "NORTH") (<= y 0)) (make-robot x (- y d) "NORTH")]
+    
+    [(and (string=? dir "SOUTH") (<= y 0) (and (>= x 15) (<= x 185)) ) "Go to possible moves" ] ;inside the canvas
+    [(and (string=? dir "SOUTH") (<= y 0) (or (< x 0) (> x 185)))
+     (make-robot x (+ y d) "SOUTH" )]; outside the canvas walls
+    [(and (string=? dir "SOUTH") (>= y 400)) (make-robot x (+ y d) "SOUTH")]
+   
+   
+  )
+ )
+
+(robot-forward 120 500 "SOUTH" 50)
+
+;;;define(robot-north?

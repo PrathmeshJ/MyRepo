@@ -1,0 +1,108 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname regexp) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+
+
+; A State is one of the
+; -- START       : Starting state of the machine
+; -- S1          : State S1 of the machine
+; -- S2          : State S2 of the machine
+; -- S3          : State S3 of the machine
+; -- ERROR       : The Error State 
+
+; TEMPLATE
+; state-fn : State ->??
+; (define( state-fn state)
+;  (cond
+;    [(string=? state "START") ...]
+;    [(string=? state "S1") ...]
+;    [(string=? state "S2") ...]
+;    [(string=? state "S3") ...]
+;    [(string=?) state "ERROR" ...]
+;   )
+;  )
+
+(define S1 "S1")
+(define S2 "S2")
+(define S3 "S3")
+(define START "START")
+(define ERROR "ERROR")
+
+
+; initial-state : Number -> State
+; GIVEN: a number
+; RETURNS: a representation of the initial state
+; of your machine.  The given number is ignored.
+; EXAMPLES : (initial-state 100) -> START
+; STRATEGY : STRUCTURAL DECOMPOSITION OF State
+
+(define (initial-state num)
+  START
+  )
+(initial-state 1)
+
+; check-key-event : MyKeyEvent -> Boolean
+; GIVEN: a KeyEvent of the user
+; RETURNS: true if string length is =1 and
+; returns false if greater
+; EXAMPLES :
+; (check-key-event "a") -> true
+; (check-key-event "b1212") -> false
+;  STRATEGY :STRUCTURAL DECOMPOSITION OF MyKeyEvent
+
+(define (check-key-event key-event)
+  (cond
+    [(= (string-length key-event) 1) true]
+    [else false]
+    )
+  )
+
+; next-state : State MyKeyEvent -> State
+; GIVEN: a state of the machine
+; RETURNS: the state that should follow the given key event.  A key
+; event that is to be discarded should leave the state unchanged.
+; EXAMPLES :
+; (next-state START "a") -> S1
+; (next-state START "b") -> S1
+; (next-state START "c") -> S2
+; (next-state S1 "a") -> S1
+; (next-state S1 "b") -> S1
+; (next-state S1 "c") -> S2
+; (next-state S1 "z") -> ERROR
+;  STRATEGY :STRUCTURAL DECOMPOSITION OF State AND MyKeyEvent
+
+(define (next-state state key-event)
+  (cond
+    [(not (check-key-event key-event)) state]
+    [(and (string=? state START) (and (string=? key-event "a") (check-key-event key-event)))
+     S1]
+    [(and (string=? state START) (string=? key-event "b")) 
+     S1]
+    [(and (string=? state START) (string=? key-event "c"))
+     S2]
+    [(and (string=? state S1) (string=? key-event "a"))
+     S1]
+    [(and (string=? state S1) (string=? key-event "b"))
+     S1]
+    [(and (string=? state S1) (string=? key-event "c"))
+     S2]
+    [(and (string=? state S2) (string=? key-event "d"))
+     S2]
+    [(and (string=? state S2) (string=? key-event "e"))
+     S3]
+    [else ERROR]
+    )
+  )
+(next-state S2 "a")
+
+
+;accepting-state? : State -> Boolean
+;GIVEN: a state of the machine
+;RETURNS: true iff the given state is a final (accepting) state
+; EXAMPLE : (accepting-state? START)-> true
+
+;
+;error-state? : State -> Boolean
+;GIVEN: a state of the machine
+;RETURNS: true iff the string seen so far does not match the specified
+;regular expression and cannot possibly be extended to do so.

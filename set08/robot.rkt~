@@ -1,0 +1,536 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname robot) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+;; Description
+;; we are using BFC to reach the given target position
+;; we first do a check to see if the target or source is a block,
+;; if so then we return false without processing further.
+;; Otherwise we start traversing from the source position.
+;; We are maintaining the list of the position with the plan
+;; to be executed to reach that position from the source position.
+;; In-order to avoid the infinite loop, we maintain a list of
+;; positions which are already visited and whose adjacent positions
+;; are considered.
+;; Everytime when a new adjacent is generated we are making sure that
+;; the adjacent is not in the given list of blocks or in already
+;; visited positions.
+;; In-order to avoid infinite loop for the infinite chessboard, we
+;; are having a boundry condition. We calculate the min point and max
+;; point of the given blocks, source and the target. We are keeping
+;; a vacent path around the given set of positions by incrementing our
+;; boundry by 2 in both top left and bottom right corner.
+
+
+(require rackunit)
+(require rackunit/text-ui)
+(require "extras.rkt")
+
+(provide path)
+
+;; A Position is a (list PosInt PosInt)
+;; (x y) represents the position at position x, y.
+;; Note: this is not to be confused with the built-in data type Posn.
+
+;; Template:
+;; position-fn : Position -> ??
+;; (define (position-fn p)
+;;   (...(first p)
+;;		 (second p)))
+
+;; A ListOf<Position> (LOP) is either
+;; -- empty
+;; -- (cons Position LOP)
+;; INTERP:
+;; empty		represents the sequence with no Position
+;; (cons Position LOP)  represents the sequence whose first is Position
+;;			and the rest of the sequence is
+;;			represented by LOP
+
+;; TEMPLATE
+;; lop-fn : LOP -> ??
+;; (define (lop-fn lop)
+;;   (cond
+;;     [(empty? lop) ...]
+;;     [else (...
+;;             (first lop)
+;;             (lop-fn (rest lop)))]))
+
+;; A ListOf<BoundaryPosition> (LOBP) is either
+;; -- empty
+;; -- (cons Position Position)
+;; INTERP:
+;; empty		          (interp : empty list)
+;; (cons Position Position)  (interp : list of two boundary positions)
+
+;; TEMPLATE
+;; lobp-fn : LOBP -> ??
+;;(define (lobp-fn lobp)
+;; (...(first lop)
+;;    (second lop)))
+
+;; A Move is a (list Direction PosInt)
+;; Interp: a move of the specified number of steps in the indicated
+;; direction.
+
+;; Template:
+;; move-fn : Move -> ??
+;; (define (move-fn m)
+;;   (...(first m)
+;;		 (second m)))
+
+
+;; A Direction is one of
+;; -- "north" interp: robot should move towards north
+;; -- "south" interp: robot should move towards south
+;; -- "east"  interp: robot should move towards east
+;; -- "west"  interp: robot should move towards west
+;;
+;; TEMPLATE
+;; direction-fn : Direction -> ??
+;(define (direction-fn d)
+;  (cond
+;    [(string=? d "north") ...]
+;    [(string=? d "south") ...]
+;    [(string=? d "east") ...]
+;    [(string=? d "west") ...]))
+
+;; A ListOf<Move> (LOM) is either
+;; -- empty
+;; -- (cons Move LOM)
+;; INTERP:
+;; empty             represents the sequence with no Move
+;; (cons Move LOM)   represents the sequence whose first is Move
+;;                   and the rest of the sequence is
+;;                   represented by LOM
+
+;; TEMPLATE
+;; lom-fn : LOM -> ??
+;; (define (lom-fn lom)
+;;   (cond
+;;     [(empty? lom) ...]
+;;     [else (...
+;;             (first lom)
+;;             (lom-fn (rest lom)))]))
+
+
+;; A NonEmptyListOf<Move> (NELOM)
+;; -- (cons Move LOM)
+;; INTERP:
+;; (cons Move LOM)   represents the sequence whose first is Move
+;;                   and the rest of the sequence is
+;;                   represented by LOM
+
+;; TEMPLATE
+;; nelom-fn : NELOM -> ??
+;; (define (nelom-fn nelom)
+;;   (cond
+;;     [(empty? (rest nelom)) ...]
+;;     [else (...
+;;             (first nelom)
+;;             (nelom-fn (rest nelom)))]))
+
+
+;; A Plan is a ListOf<Move>
+;; WHERE: the list does not contain two consecutive moves in the same
+;; direction.
+
+;; Maybe<Plan>> is either
+;; -- false
+;; -- LOM
+;; INTERP:
+;; false               represents the scalar value - false
+;; LOM				   represents the sequence of Moves
+;;					   ListOf<Move>
+
+;; Template:
+;; mbep-fn: Maybe<Plan>> -> ??
+;; (define (mbep-fn mbep)
+;;  (cond
+;;    [(false? mbep) ...]
+;;    [else (... (mbep-fn mbep))]))
+
+
+;; State is (list Position LOM)
+;; INTERP:
+;; Position is the position repesenting
+;; x and y co-ordinates
+;; LOM is the ListOf<Move> to be made to
+;; reach the Position
+
+;; Template
+;; state-fn : State -> ??
+;; (define (state-fn s)
+;;   (...
+;;		(position-fn (first s))
+;;		(lom-fn (second s))))
+
+
+;; A ListOf<State> (LOS) is
+;; -- empty
+;; -- (cons State LOS)
+;; INTERP:
+;; empty             represents the sequence with no State
+;; (cons State LOS)  represents the sequence whose first is State
+;;                   and the rest of the sequence is
+;;                   represented by LOS
+
+
+;; los-fn : LOS -> ??
+;; (define (los-fn los)
+;;   (cond
+;;     [(empty? los) ...]
+;;     [else (...
+;;             (state-fn (first los))
+;;             (los-fn (rest los)))]))
+
+
+;; A NonEmptyListOf<State> (NELOS) is
+;; -- (cons State LOS)
+;; INTERP:
+;; (cons State LOS)represents the sequence whose first is State
+;;                   and the rest of the sequence is
+;;                   represented by LOS
+
+
+;; nelos-fn : NELOS -> ??
+;; (define (nelos-fn nelos)
+;;   (cond
+;;     [(empty? (rest nelos)) ... (first nelos)]
+;;     [else (...
+;;             (state-fn (first nelos))
+;;             (nelos-fn (rest nelos)))]))
+
+
+;;-----------------------------------------
+;; path : Position Position ListOf<Position> -> Maybe<Plan>>
+;; GIVEN:
+;; 1. the starting position of the robot,
+;; 2. the target position that robot is supposed to reach
+;; 3. A list of the blocks on the board
+;; RETURNS: a plan that, when executed, will take the robot from
+;; the starting position to the target position without passing over any
+;; of the blocks, or false if no such sequence of moves exists.
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: function composition
+(define (path src tgt lop)
+  (if (or (member src lop)
+          (member tgt lop))
+      false
+      (path-helper (list (list src empty))
+                   (list src)
+                   tgt lop
+                   (get-boundry-limits lop src tgt))))
+
+;; path-helper : ListOf<State> ListOf<Position> Position
+;;				 ListOf<State> ListOf<State> -> Maybe<Plan>>
+;; GIVEN:
+;; 1. The ListOf<State> whose state position we haven't taken
+;; 2. The list 'nodes' of all the position we've seen
+;; 3. The target Position 'tgt' that we are trying to reach
+;; 4. The ListOf<Position> where we have blocks and robot can't
+;;		step on
+;; 5. The ListOf<Position> whose length is always 2 and the first
+;; Position denotes the top left corner and second Position denotes
+;; the bottom right corner of the boundry for the chessboard
+;; RETURNS: Is the plan to reach tgt from the given Position in the
+;; first Newest State, if not reachable then returns false
+;; INVARIANT: newest states will have position which is a subset of
+;; nodes
+;; AND:
+;;   (there is a path from src to tgt with the lop as a condition)
+;;   iff (there is a path from newest to tgt)
+;; HALTING MEASURE: no newest position available to visit and move
+;; the robot further
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: general recursion
+(define (path-helper newest nodes tgt lop lobp)
+  (cond
+    [(is-position-in-states-list? tgt newest) (return-plan-of-tgt newest tgt)]
+    [(empty? newest) false]
+    [else (local
+            ((define candidates (nodes-not-visited
+                                 (get-adjacent (first newest) lop lobp)
+                                 nodes)))
+            (if (empty? candidates)
+                (path-helper (rest newest) nodes tgt lop lobp)
+                (path-helper (append (rest newest) candidates)
+                             (add-state-positions-to-lop candidates nodes)
+                             tgt
+                             lop lobp)))]))
+
+;; get-adjacent : State LOP LOP -> LOS
+;; GIVEN: a State s, List of positions (blocks on chessboard)
+;; and list of boundry (top left and bottom right boundries)
+;; RETURNS: the list of states with adjacent State (adjacent
+;; position with moves to reach it)
+;; WHERE: The list of boundry (lobp) positions is always length of 2
+;; and the first Position denotes the top left corner and
+;; second Position denotes the bottom right corner of the
+;; boundry for the chessboard
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: HOFC + structural decomposition on state : State +
+;;			 structural decomposition on lobp : ListOf<Position>
+(define (get-adjacent s lop lobp)
+  (filter
+   ;; State -> Boolean
+   ;; GIVEN: a State
+   ;; RETURNS: true iff the Position in the state is
+   ;; with-in the boundry and it is not a block
+   ;; STRATEGY: Structural decomposition on state : State
+   ;;           Structural decomposition on lobp : LOP
+   (lambda (state)
+     (and (not (member (first state) lop))
+          (check-state-with-boundary-positions state lobp)))
+   (create-adjacent-positions-with-moves
+    (first (first s))
+    (second (first s))
+    (second s))))
+
+
+
+;; check-state-with-boundary-positions : State ListOf<BoundaryPosition>->Boolean
+;; GIVEN : A state and a boundaty list
+;; RETURNS : true if the state position does not match the boundary position
+;; EXAMPLES :
+;; STRATEGY :
+(define (check-state-with-boundary-positions state boundary-pair)
+  (and (not (= (first (first state)) (first (first boundary-pair))))
+       (not (= (first (first state)) (first (second boundary-pair))))
+       (not (= (second (first state)) (second (first boundary-pair))))
+       (not (= (second (first state)) (second (second boundary-pair))))))
+
+
+;; create-adjacent-positions-with-moves :
+;;		PosInt PosInt LOM -> LOS
+;; GIVEN: x and y position, and list of previous moves
+;; RETURNS: the adjacent position with the moves (i.e adjacent
+;; position states)
+;; WHERE: lom represents the moves to reach the position formed
+;; by the x and y values
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: function composition
+(define (create-adjacent-positions-with-moves x y lom)
+  (list
+   (list (list (+ x 1) y) (merge-moves lom (list "east" 1)))
+   (list (list (- x 1) y) (merge-moves lom (list "west" 1)))
+   (list (list x (+ y 1)) (merge-moves lom (list "south" 1)))
+   (list (list x (- y 1)) (merge-moves lom (list "north" 1)))))
+
+
+;; merge-moves : LOM Move -> LOM
+;; GIVEN: a list of moves and a move
+;; RETURNS: the list of moves after merging the last move with
+;; the given move (if the directions are same)
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: function composition
+(define (merge-moves lom m)
+  (if (empty? lom)
+      (list m)
+      (if (string=? (first (first (reverse lom))) (first m))
+          (append (first-length-1 lom) (list (increase-move-by-one (first (reverse lom)))))
+          (append lom (list m)))))
+
+;; increase-move-by-one : Move -> Move
+;; GIVEN: a Move
+;; RETURNS: the given move with the move steps increased
+;; by one
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: structural decomposition on m : Move
+(define (increase-move-by-one m)
+  (list (first m) (+ (second m) 1)))
+
+;; first-length-1 : NELOM -> NELOM
+;; GIVEN: a non-empty list of moves
+;; RETURNS: the first lenght - 1 moves from the
+;; list of moves
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: structural decomposition on nelom : NELOM
+;; treating the rest as speial
+(define (first-length-1 nelom)
+  (cond
+    [(empty? (rest nelom)) empty]
+    [else (cons (first nelom) 
+                (first-length-1 (rest nelom)))]))
+
+
+;; return-plan-of-tgt : NELOS Position -> Plan
+;; GIVEN: a list of states and a position
+;; WHERE: the given position has to be there in given
+;; ListOf<State>
+;; RETURNS: LOM associated with the given Position in the
+;; given ListOf<state>
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: structural decomposition on nelos : NELOS
+(define (return-plan-of-tgt nelos p)
+  (cond
+    [(empty? (rest nelos)) (second (first nelos))]
+    [else (if (equal? (first (first nelos)) p)
+              (second (first nelos))
+              (return-plan-of-tgt (rest nelos) p))]))
+
+
+;; add-state-positions-to-lop : LOS LOP -> LOP
+;; GIVEN: a list of states and a list of positions
+;; RETURNS: the list of positions along with the positions
+;; in the LOS added
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: HOFC
+(define (add-state-positions-to-lop los lop)
+  (foldr
+   (lambda (s base) (cons (first s) base))
+   lop los))
+
+
+;; is-position-in-states-list? : Position LOS -> Boolean
+;; GIVEN: a position and list of states
+;; RETURNS: true iff the given position is found in
+;; given list of states
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: HOFC
+(define (is-position-in-states-list? tgt los)
+  (ormap 
+   (lambda (s) (equal? (first s) tgt))
+         los))
+
+;; nodes-not-visited : LOS LOP -> LOS
+;; GIVEN: a list of states and list of positions
+;; RETURNS: the given LOS with all the states with
+;; position in given list of positions filtered
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: HOFC
+(define (nodes-not-visited los lop)
+  (filter
+   (lambda (s)
+     ;; State -> Boolean
+     ;; GIVEN: a State
+     ;; RETURNS: true iff the Position in the state is
+     ;; not in the list of positions (in closure)
+     ;; STRATEGY: function composition
+     (not (member (first s) lop)))
+   los))
+
+
+;; get-boundry-limits : LOP Position Position -> LOP
+;; GIVEN: a list of positions, source position and
+;; target position
+;; RETURNS: the min and max positions with 2 subtracted
+;; and added respectively
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: structural decomposition on src : Position
+;;           structural decomposition on tgt : Position
+(define (get-boundry-limits lop src tgt)
+  (fix-min-boundary (get-boundry-limits-helper
+                    (list (get-min-max-boundry (cons src (cons tgt lop)) < (first src) (second src))
+                          (get-min-max-boundry (cons src (cons tgt lop)) > (first tgt) (second tgt))))))
+
+;; get-boundry-limits-helper : LOP -> LOP
+;; GIVEN: a list of positions
+;; WHERE: the length of list of positions is always two
+;; RETURNS: the given min and max positions with 2 subtracted
+;; and added respectively
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: structural decompsition on lop : LOP
+;;           structural decompsition on Position
+(define (get-boundry-limits-helper lop)
+  (list (list (- (first (first lop)) 2) (- (second (first lop)) 2))
+        (list (+ (first (second lop)) 2) (+ (second (second lop)) 2))))
+
+
+;; fix-min-boundary : LOP -> LOP
+;; GIVEN: a list of positions
+;; WHERE: the length of list of positions is always two
+;; RETURNS: the given list of positions with the min position
+;; changed to origin if it has gone beyond the origin
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: structural decompsition on lop : LOP
+;;           structural decompsition on Position
+(define (fix-min-boundary lop)
+  (if (and (< (second (first lop)) 0) (< (first (first lop)) 0))
+      (list (list 0 0)
+            (list (first (second lop)) (second (second lop))))
+      (if (< (second (first lop)) 0)
+          (list (list (first (first lop)) 0)
+                (list (first (second lop)) (second (second lop))))
+          (if (< (first (first lop)) 0)
+              (list (list 0 (second (first lop)))
+                    (list (first (second lop)) (second (second lop))))
+              lop))))
+
+;; get-min-max-boundry : LOP (X X -> X) PosInt PosInt -> LOP
+;; GIVEN: a list of positions, a function (+ or -), and
+;; two PosInt (x and y of a position from LOP)
+;; WHERE: x and y will be the minimum or maximum from the
+;; previous values of LOP
+;; RETURNS: the min and max from the given list of positions
+;; EXAMPLE:
+;; see tests below
+;; STRATEGY: structural decomposition on lop : LOP
+(define (get-min-max-boundry lop operator x y)
+  (cond
+    [(empty? lop) (list x y)]
+    [else (get-min-max-boundry (rest lop) operator
+                               (if (operator (first (first lop)) x)
+                                   (first (first lop))
+                                   x)
+                               (if (operator (second (first lop)) y)
+                                   (second (first lop))
+                                   y))]))
+
+(define-test-suite path-tests
+
+  (check-equal?
+   (path (list 1 1) (list 2 2) (list (list 1 1)))
+   false
+   "check for src or tgt as a block")
+
+  (check-equal?
+   (path (list 1 1) (list 4 4) empty)
+   (list (list "east" 3) (list "south" 3))
+   "check for path with no blocks on chessboard")
+
+  (check-equal?
+   (path (list 3 1) (list 4 4) empty)
+   (list (list "east" 1) (list "south" 3))
+   "check for path with no blocks on chessboard with y less than 0")
+
+  (check-equal?
+   (path (list 1 3) (list 4 4) empty)
+   (list (list "east" 3) (list "south" 1))
+   "check for path with no blocks on chessboard with x less than 0")
+
+  (check-equal?
+   (path (list 3 3) (list 4 4) empty)
+   (list (list "east" 1) (list "south" 1))
+   "check for path with no blocks on chessboard with no less than 0")
+
+  (check-equal?
+   (path (list 4 4) (list 3 3) empty)
+   (list (list "west" 1) (list "north" 1))
+   "check for path with no blocks on chessboard with reversed src tgt")
+
+  (check-equal?
+   (path (list 1 1) (list 2 3) (list (list 2 2) (list 1 3) (list 3 3) (list 2 4)))
+   false
+   "check for path with no blocks on chessboard with no path")
+
+  (check-equal?
+   (path (list 1 1) (list 4 4) (list (list 2 1)))
+   (list (list "south" 1) (list "east" 3) (list "south" 2))
+   "check for position with a block on east adjacent position"))
+
+
+(run-tests path-tests)

@@ -1,0 +1,40 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname |3|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+(define-struct diff-exp (rand1 rand2))
+
+;; A diff-expr is a (make-diff-expr Number Number)
+;; rand1 and rand2 are Numbers,
+;; TEMPLATE:
+;; (define (diff-exp-fn b)
+;;   (...
+;;     (diff-exp-rand1 b)
+;;     (diff-exp-rand2 b)
+;;    )
+;;  )
+
+(define-struct mult-exp (rand1 rand2))
+
+;; A mult-exp is a (mult-exp Number Number)
+;; rand1 and rand2 are Numbers,
+;; TEMPLATE:
+;; (define (mult-exp b)
+;;   (...
+;;     (mult-exp-rand1 b)
+;;     (mult-exp-rand2 b)
+;;    )
+;;  )
+
+
+;; An Expr is one of
+;; -- (make-diff-exp Number Number)
+;; -- (make-mult-exp Number Number)
+;; Interpretation: a diff-exp represents a difference,
+;; and a mult-exp represents a multiplication
+
+(define (expr-to-image e b)
+  (cond
+    []
+   )
+  )
+

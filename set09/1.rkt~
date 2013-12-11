@@ -1,0 +1,527 @@
+#lang racket
+
+;; space-invaders-3.rkt
+;; with interfaces.
+
+; in this version, we will add probe methods to facilitate testing
+; first look at the probe for bomb
+; then, the probe for world
+
+(require rackunit)
+(require rackunit/text-ui)
+(require 2htdp/universe)
+(require 2htdp/image)
+
+;; Press space to drop a new bomb.  
+;; rectangles fall at a constant rate. 
+;; rectangles are draggable. 
+
+;; targetcopter just rises at a constant rate.
+
+;; start with (run framerate).  Typically: (run 0.25)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; CONSTANTS
+
+;;; CONSTANTS
+
+(define CANVAS-WIDTH 400)
+(define CANVAS-HEIGHT 500)
+
+(define EMPTY-CANVAS (empty-scene CANVAS-WIDTH CANVAS-HEIGHT))
+
+;; arbitrary choice
+(define CANVAS-CENTER-X (/ CANVAS-WIDTH 2))
+(define CANVAS-CENTER-Y (/ CANVAS-HEIGHT 2))
+(define BALL-RADIUS 10)
+
+(define RECTANGLE-WIDTH 30)
+(define RECTANGLE-HEIGHT 20)
+(define RECTANGLE-HALF-WIDTH (/ RECTANGLE-WIDTH 2))
+(define RECTANGLE-HALF-HEIGHT (/ RECTANGLE-HEIGHT 2))
+
+
+;; A direction is one of
+;; -- "east"
+;; -- "west"
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; INTERFACE
+
+(define World<%>
+  (interface ()
+
+    ;; -> World<%>
+    ;; Returns the World<%> that should follow this one after a tick
+    on-tick                             
+
+    ;; Integer Integer MouseEvent -> World<%>
+    ;; Returns the World<%> that should follow this one after the
+    ;; given MouseEvent
+    on-mouse
+
+    ;; KeyEvent -> World<%>
+    ;; Returns the World<%> that should follow this one after the
+    ;; given KeyEvent
+    on-key
+
+    ;; Scene -> Scene
+    ;; Returns a Scene like the given one, but with this object drawn
+    ;; on it.
+    add-to-scene  
+    
+    ;; -> Integer
+    ;; Returns the x and y coordinates of the target
+    get-x
+    get-y
+
+    ;; -> Boolean
+    ;; Is the target selected?
+    get-selected?
+
+
+    ;; -> ListOf<Rectangle<%>>
+    get-rectangles
+
+))
+
+(define Rectangle<%>
+  (interface ()
+
+    ;; -> Rectangle<%>
+    ;; Returns the Rectangle<%> that should follow this one after a tick
+    on-tick                             
+
+    ;; Integer Integer MouseEvent -> Rectangle<%>
+    ;; Returns the Rectangle<%> that should follow this one after the
+    ;; given MouseEvent
+    on-mouse
+
+    ;; KeyEvent -> Rectangle<%>
+    ;; Returns the Rectangle<%> that should follow this one after the
+    ;; given KeyEvent
+    on-key
+
+    ;; Scene -> Scene
+    ;; Returns a Scene like the given one, but with this object drawn
+    ;; on it.
+    add-to-scene
+
+    ;; -> Integer
+    ;; Return the x and y coordinates of the center of the rectangle.
+    get-x
+    get-y
+
+    ;; -> Boolean
+    ;; Is the rectangle currently selected?
+    is-selected?
+
+))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Here's what a class definition looks like:
+
+;; classes are like data definitions.  They should have a purpose statement
+;; describing what information they are supposed to represent, and
+;; interpretations of the fields describing the meaning of each piece of data.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; A World is a (new World% [target targetcopter] [rectangles ListOf<Bomb>])
+;; interpretation: represents a world, containing a targetcopter and some rectangles.
+(define World%               ; the % is silent
+  (class* object% (WorldObj<%>)         
+    ;; what you need to create an object of this class
+    (init-field target)        ; a targetcopter   --the targetcopter in the game
+    (init-field rectangles)     ; a ListOf<Bomb> -- the list of rectangles that the UFO has dropped.
+    (init-field speed)         ; speed is the speed with which the rectangles moves
+
+    ;; you can declare private fields, too; see below
+    
+    ;; this line is mandatory magic   
+    (super-new)
+
+    ;; on-tick : -> World
+    ;; RETURNS: A world like this one, but as it should be after a tick
+    ;; STRATEGY: function composition
+    (define/public (on-tick)
+      (new World%
+        [target target] 
+        [rectangles   (map
+                   (lambda (bomb) (send bomb on-tick))
+                   rectangles)]))
+    
+    ;; after-mouse-event : Number Number MouseEvent -> World
+    ;; RETURNS: A world like this one, but as it should be after the
+    ;; given mouse event.
+    ;; STRATEGY: function composition
+    (define/public (after-mouse-event x y evt)
+      (new World%
+           [target (send target after-mouse-event x y evt)]
+           [rectangles (map
+                   (lambda (bomb) (send bomb after-mouse-event x y evt))
+                   rectangles)]))
+    
+    ;; after-key-event : KeyEvent -> World
+    ;; RETURNS: A world like this one, but as it should be after the
+    ;; given key event.
+    ;; STRATEGY: structural decomposition on KeyEvent (kev)
+    ;; DETAILS: on space, drop a bomb, otherwise ignore
+    ;; NOTE: here I was too lazy to provide a proper data definition
+    ;; for SpaceInvadersKeyEvent.  -2 for me.  You should do better.
+    (define/public (after-key-event kev)
+      (cond
+        [(key=? kev " ")
+         (new World%
+              [target target]
+              [rectangles (cons (make-bomb) rectangles)])]
+        [else this]))    
+    
+    ;; to-scene : Scene -> Scene
+    ;; RETURNS: a scene like the given one, but with this world painted
+    ;; on it.
+    ;; STRATEGY: function composition
+    (define/public (to-scene scene0)
+      (local
+        ;; first add the targetcopter to the scene
+        ((define scene-with-targetcopter (send target to-scene scene0)))
+        ;; then tell each bomb to add itself to the scene
+        (foldr
+         (lambda (bomb scene)
+          (send bomb to-scene scene))
+         scene-with-targetcopter
+         rectangles)))
+
+    ;; -> target
+    (define/public (get-target) target)
+
+    ;; -> rectangles
+    (define/public (get-rectangles) rectangles)
+    
+    
+    ;; -> Integer
+    ;; Returns the x and y coordinates of the target
+    (define/public (get-x) (send target get-x))
+    (define/public (get-y) (send target get-y))
+
+    ;; -> Boolean
+    ;; Is the target selected?
+    (define/puclic (get-selected?) (send target get-selected?))
+
+    ))          ; this is one of the few times we will allow you
+                ; to have right parens on a line by themselves
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; A Rectangle is a (new Rectangle% [x Number][y Number]
+;;                        [radius Number][selected? Boolean])
+;; A Rectangle represents a rectangle.
+(define Rectangle%
+  (class* object% (Rectangle<%>) 
+    (init-field
+     x            ; the bomb's x position, in pixels, 
+                  ; relative to the upper-left corner of the canvas
+     y )          ; the bomb's y position
+    (init-field
+     mx            ; the mouse  x position, in pixels, 
+                   ; the mouse  y position, in pixels, 
+     my )
+    (init-field [direction "east"])   ; the target's direction of motion
+    (init-field [selected? false])   ; the bomb's selected? status-
+                                     ; initially false.
+     
+    
+    ;; private data for objects of this class.
+    ;; these can depend on the init-fields.
+    (field [IMG (rectangle RECTANGLE-WIDTH RECTANGLE-HEIGTH "outline" "green")])     ; image for displaying the bomb
+    (field [rectanglesPEED 4])                      ; the bomb's speed, in pixels/tick
+       
+    (super-new)
+    
+    ;; on-tick : -> Bomb
+    ;; RETURNS: A bomb like this one, but as it should be after a tick
+    (define/public (on-tick RECTANGLE-SPEED)
+      (new Rectangle% [x x][y (+ y RECTANGLE-SPEED)][r r][selected? selected?]))
+    
+    ;; after-key-event : KeyEvent -> Bomb
+    ;; RETURNS: A world like this one, but as it should be after the
+    ;; given key event.
+    ;; DETAILS: a bomb ignores key events
+    ;; STRATEGY: domain knowledge
+    (define/public (after-key-event kev)
+      this)      
+    
+    ; after-mouse-event : Number Number MouseEvent -> Bomb
+    ; GIVEN: the location of a mouse event, and the mouse event
+    ; RETURNS: the bomb that should follow this one after the given
+    ; mouse event.
+    ; STRATEGY: STRUCT DECOMP on evt : MouseEvent
+    (define/public (after-mouse-event mouse-x mouse-y evt)
+      (cond
+        [(mouse=? evt "button-down")
+         (send this bomb-after-button-down mouse-x mouse-y)]
+        [(mouse=? evt "drag") 
+         (send this bomb-after-drag mouse-x mouse-y)]
+        [(mouse=? evt "button-up")
+         (send this bomb-after-button-up)]
+        [else this]))
+
+    
+    ;; bomb-after-button-down : Number Number -> Bomb
+    ;; GIVEN: the location of a mouse event
+    ;; RETURNS: the bomb that should follow this one after a button
+    ;; down at the given location
+    ;; DETAILS:  If the event is inside
+    ;; the bomb, returns a bomb just like this bomb, except that it is
+    ;; selected.  Otherwise returns the bomb unchanged.
+    ;; STRATEGY: structural decomposition on this
+    (define/public (bomb-after-button-down mouse-x mouse-y)
+      (if (send this in-bomb? mouse-x mouse-y)
+        (new Bomb% [x x][y y][r r][selected? true])
+        this))
+
+    ;; bomb-after-drag : Number Number -> Bomb
+    ;; GIVEN: the location of a mouse event
+    ;; RETURNS: the bomb that should follow this one after a drag at
+    ;; the given location 
+    ;; DETAILS: if bomb is selected, move the bomb to the mouse location,
+    ;; otherwise ignore.
+    ;; STRATEGY: domain knowledge  (NOTE: new doesn't count)
+    (define/public (bomb-after-drag mouse-x mouse-y)
+      (if selected?
+        (new Bomb% [x mouse-x][y mouse-y][r r][selected? true])
+        this))
+
+
+    ;; bomb-after-button-up : -> Bomb
+    ;; RETURNS: the bomb that should follow this one after a button-up
+    ;; DETAILS: button-up unselects all rectangles
+    ;; STRATEGY: domain knowledge  (NOTE: new doesn't count)
+    (define/public (bomb-after-button-up)
+      (new Bomb% [x x][y y][r r][selected? false]))
+
+    ;; to-scene : Scene -> Scene
+    ;; RETURNS: a scene like the given one, but with this bomb painted
+    ;; on it.
+    ;; STRATEGY: function composition
+    (define/public (to-scene scene)
+      (place-image IMG x y scene))
+    
+    ;; in-bomb? : Number Number -> Boolean
+    ;; GIVEN: a location on the canvas
+    ;; RETURNS: true iff the location is inside this bomb.
+    (define/public (in-bomb? other-x other-y)
+      (<= (+ (sqr (- x other-x)) (sqr (- y other-y)))
+          (sqr r)))
+    
+    ;; getters:
+    (define/public (get-x) x)
+    (define/public (get-y) y)
+    (define/public (get-selected?) selected?)
+
+    ;; Note: you don't need or want to have getters for everything.
+    ;; We chose not to have a getter for r, or for the other
+    ;; fields. 
+
+    ))
+
+;; A target is a (new target% [x Number][y Number])
+;; A target represents a targetcopter
+;; in this version, the targetcopter just rises slowly.
+;; in a real system, the targetcopter would behave quite differently from a bomb.
+(define target%
+  (class* object% (WorldObj<%>)
+    (init-field
+     x            ; the target's x position
+     y            ; the target's y position
+     )
+    
+    ;; private data for objects of this class.
+    ;; these can depend on the init-fields.
+    (field [target-IMG                             ; image for displaying the target
+             (square 20 "outline" "green")])
+    (field [target-SPEED -2])                    ; the target's speed, in pixels/tick
+   
+    (super-new)
+    
+    ;; on-tick : -> target
+    ;; RETURNS: A target like this one, but as it should be after a tick
+    ;; DETAILS: the targetcopter moves vertically by target-SPEED
+    ;; STRATEGY: domain knowledge
+    (define/public (on-tick)
+      (new target% [x x][y (+ y target-SPEED)]))
+    
+    ; after-mouse-event : Number Number MouseEvent -> target
+    ; GIVEN: the location of a mouse event, and the mouse event
+    ; RETURNS: the bomb that should follow this one after the given
+    ; mouse event.
+    ; DETAILS: the targetcopter ignores mouse events
+    ;; STRATEGY: domain knowledge
+    (define/public (after-mouse-event x y evt)
+     this)
+    
+
+
+    ;; after-key-event : KeyEvent -> target
+    ;; RETURNS: A world like this one, but as it should be after the
+    ;; given key event.
+    ;; DETAILS: a target ignores key events
+    ;; STRATEGY: domain knowledge
+    ; KeyEvent -> target
+    (define/public (after-key-event kev)
+      this)    
+    
+    ;; to-scene : Scene -> Scene
+    ;; RETURNS: a scene like the given one, but with this target painted
+    ;; on it.
+    ;; STRATEGY: function composition
+    (define/public (to-scene scene)
+      (place-image target-IMG x y scene))    
+                        
+    ;; getters: used only for testing
+    (define/public (get-x) x)
+    (define/public (get-y) y)
+
+    ))
+
+;; make-bomb: -> Bomb
+;; RETURNS: a new bomb at the 
+(define (make-bomb)
+  (new Bomb% [x NEW-BOMB-X][y 0][r NEW-BOMB-RADIUS]))
+
+(define (bomb-similar? b1 b2)
+  (and
+    (equal? (send b1 get-x) (send b2 get-x))
+    (equal? (send b1 get-y) (send b2 get-y))))
+
+(define (target-similar? h1 h2)
+  (and 
+    (equal? (send h1 get-x) (send h2 get-x))
+    (equal? (send h1 get-y) (send h2 get-y))))
+
+
+;; how would you write world-similar??
+
+(define (world-similar? w1 w2)
+  (and
+     (target-similar? (send w1 get-target) (send w2 get-target))
+     (andmap
+      (lambda (b1 b2) (bomb-similar? b1 b2))
+      (send w1 get-rectangles)
+      (send w2 get-rectangles))))
+
+;; here we've used the 2-argument version of andmap.
+;; In what way does world-similar? equate two worlds that might be
+;; different?
+;; In what way does world-similar? fail to equate two worlds that
+;; might reasonably considered similar?
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; setting up the world:
+
+;; initial-world : -> World
+;; RETURNS: a world with a targetcopter and no rectangles
+(define (initial-world)
+  (new World% 
+       [target (new target% [x target-INITIAL-X][y target-INITIAL-Y])]
+       [rectangles empty]))
+
+; run : Number -> World
+; GIVEN: a frame rate, in secs/tick
+; EFFECT: runs an initial world at the given frame rate
+; RETURNS: the final state of the world
+(define (run rate)
+  (big-bang (initial-world)
+            (on-tick
+              (lambda (w) (send w on-tick))
+              rate)
+            (on-draw
+              (lambda (w) (send w to-scene EMPTY-CANVAS)))
+            (on-key
+              (lambda (w kev) (send w after-key-event kev)))
+            (on-mouse
+              (lambda (w x y evt) (send w after-mouse-event x y evt)))))
+
+
+  
+(define-test-suite bomb-tests  
+
+  ;; how is a bomb related to itself?
+  
+  (local ((define b1 (make-bomb)))
+    (check-eqv? b1 b1
+      "a bomb is eqv? to itself"))
+
+  (local ((define b1 (make-bomb)))
+    (check-equal? b1 b1
+      "a bomb is equal? to itself"))
+
+  (local ((define b1 (make-bomb)))
+    (check bomb-similar? b1 b1
+      "a bomb is similar? to itself"))
+  
+  ;; how are two new rectangles related?
+
+  (local ((define b1 (make-bomb))
+          (define b2 (make-bomb)))
+    (check-not-eqv?
+     b1 b2
+     "two new rectangles are not eqv?"))
+
+  (local ((define b1 (make-bomb))
+          (define b2 (make-bomb)))
+    (check-not-equal?
+     b1 b2
+     "two new rectangles are not equal?"))
+
+  (local ((define b1 (make-bomb))
+          (define b2 (make-bomb)))
+    (check bomb-similar?
+      b1 b2
+      "but two new rectangles are bomb-similar? to each other?"))
+
+  ;; compare a new bomb b1 and (send b1 after-key-event " ") 
+  
+  (local ((define b1 (make-bomb))
+          (define b2 (send b1 after-key-event " ")))
+    (check-eqv?
+     b1 b2
+     "Is (send b1 after-key-event space) the same as b1?"))
+
+  (local ((define b1 (make-bomb))
+          (define b2 (send b1 after-key-event " ")))
+    (check-equal?
+     b1 b2
+     "(send b1 after-key-event space) is not equal? to b1"))
+
+  (local ((define b1 (make-bomb))
+          (define b2 (send b1 after-key-event " ")))
+    (check
+     bomb-similar?
+     b1 b2
+     "(send b1 after-key-event space) is bomb-similar? to b1"))
+
+;; compare worlds
+  
+  (check world-similar?
+    (initial-world)
+    (initial-world)
+    "two new worlds are similar to each other")
+
+  (local ((define w1 (send (initial-world) after-key-event " "))
+          (define w2 (send w1 after-key-event " ")))
+      (check-equal?
+        (length (send w2 get-rectangles))
+        2
+        "after 2 spaces, there should be 2 rectangles"))
+
+  )
+
+(run-tests bomb-tests)
+
+    

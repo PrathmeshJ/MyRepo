@@ -1,0 +1,63 @@
+
+
+Date  Who    	Start  Stop   Interruptions   Question  TimeOnTask                 Comments
+
+
+12/01 SS PJ     11:00  14:00                    1         180                Discussed the problem set and read the material
+ 
+12/01 SS PJ     16:00  19:00  10                1         170                Data definition Question 1
+
+12/01 SS PJ     17:00  20:30  20                1         210                Function implementation Q1
+
+
+----------------------Committed changes to GitHub at 20:45 on 12/01/2013-------------------------------------------
+
+
+12/02 SS PJ    	1:00  4:00                       1         180                Function implementation Q1.Continued.
+ 
+12/02 SS PJ     9:30  12:40   10                1         180                Function implementation Q1.Continued.
+
+12/02 PJ SS     15:00  18:30		          1         210		  Writing Design Recipe.		   
+
+12/02 SS PJ     17:00  20:30  20                1         190                Writing test cases.
+
+12/02 PJ SS     23:00  1:30		          1	     150		  Writing test cases and examples.			 
+
+
+----------------------Committed changes to GitHub at 20:45 on 12/02/2013-------------------------------------------
+
+
+12/03 SS PJ     10:30  14:30  10               2         230                continuing Q2.
+
+12/03 PJ SS     16:00  17:30 		         2	    90		        Data Definition Q1.
+
+12/03 PJ SS     20:00  23:30  20	         2	    190		        Function implementation Q2.
+
+12/03 PJ SS     1:30   3:45   15	         2	    120		        Function implementation Q2. Continued.				
+
+
+----------------------Committed changes to GitHub at 20:00 on 12/03/2013-------------------------------------------
+
+
+12/04 SS PJ     8:30  12:45  15+15             2          225                 Writing Test Cases.
+
+12/04 PJ SS     13:00  14:30  10               2          90                  Writing Design Recipe.
+
+12/04 SS PJ     15:00  17:30                   2          150                 Writing Examples.
+
+12/04 SS PJ     17:40  17:45                   2          5                   Updated notebook
+
+----------------------Committed changes to GitHub at 17:55  12/04/2013-------------------------------------------
+
+
+
+Total Time On Task Q1 (minutes)                  1470 
+
+
+TOTQ1 (hours and tenths)                         24.5
+
+
+Total Time On Task Q2 (minutes)                  1100 
+
+
+TOTQ2 (hours and tenths)                         18.3

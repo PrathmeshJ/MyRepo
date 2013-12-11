@@ -1,0 +1,316 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname balls-in-box) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+;; Balls-In-Box
+;; user can drag the balls with the mouse on the canvas
+;; button-down to select, drag to move, button-up to release.
+;; on selecting the ball,the ball must turn to solid green
+;; ball and it should be smoothly draggable.
+;; also a count of number of balls on canvas must be displayed.
+;; start with (run 0)
+(require rackunit)
+(require rackunit/text-ui)
+(require "extras.rkt")
+(require 2htdp/universe)
+(require 2htdp/image)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; run with (run 0)
+
+(provide run)
+(provide initial-world)
+(provide world-after-mouse-event)
+(provide world-after-key-event)
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MAIN FUNCTION.
+;;run : Any -> World
+;;GIVEN: an argumentt,which is ignored.
+;;EFFECT: runs the world at tick rate of 0.25 secs/tick.
+;;RETURNS: the final state of the world.
+
+(define (run any-value)
+  (big-bang (initial-world any-value)
+            (on-draw world->scene)
+            (on-mouse world-after-mouse-event)
+            (on-key  world-after-key-event)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;CONSTANTS
+;;dimensions of  the canvas
+(define CANVAS-WIDTH 400)
+(define CANVAS-HEIGHT 300)
+(define EMPTY-CANVAS (empty-scene CANVAS-WIDTH CANVAS-HEIGHT))
+;;center of canvas on x and y axis
+(define CANVAS-CENTER-X (/ CANVAS-WIDTH 2))
+(define CANVAS-CENTER-Y (/ CANVAS-HEIGHT 2))
+;;dimensions of the ball
+(define BALL-RADIUS 20)
+(define BALL-COLOR "green")
+;;distance from the center
+(define DISTANCE-FROM-CENTER 20)
+;;draw a  selected ball
+(define SELECTED-BALL (circle BALL-RADIUS "solid" BALL-COLOR))
+;;draw a unselected ball
+(define UNSELECTED-BALL (circle BALL-RADIUS "outline" BALL-COLOR))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;DATA DEFINITIONS
+
+(define-struct ball(x y mx my select?))
+;;A Ball is a (make-ball Number Number Number Number Boolean)
+;; x is the center coordinate of the ball on x-axis
+;; y is the center coordinate of the ball on y-axis
+;; mx is the coordinate of the mouse pointer  on x-axis
+;; my is the coordinate of the mouse pointer on y-axis
+;; select? describes whether or not the ball is selected 
+
+;;template:
+;; ball-fn : Ball -> ??
+;;(define (ball-fn b)
+;; (... (ball-x b) (ball-y b) (ball-mx b) (ball-my b)(ball-select? b)))
+
+
+
+
+;; A List Of Balls (Listof<Ball>) is one of:
+;; -- empty
+;; -- (cons Ball Listof<Ball>)
+
+;; Template:
+;; list-fn : Listof<Ball> -> ??
+;; (define (list-fn lst)
+;;   (cond
+;;     [(empty? lst) ...]
+;;     [else (... (first lst)
+;;                (list-fn (rest lst)))]))
+
+
+
+(define-struct world(lst))
+;;A World is a (make-world (Listof<Ball>))
+;;lst is the list of balls on the canvas
+
+;;template:
+;; world-fn : World -> ??
+;;(define (world-fn w)
+;; (... (world-lst w)))
+
+
+
+;;A MakeBallKeyEvent is a KeyEvent, which is one of
+;;-- "n"                (interp: create a new ball at center of canvas)
+;;-- any other KeyEvent (interp: ignore)
+
+;;TEMPLATE:
+;;make-ball-kev-fn : MakeBallKeyEvent -> ??
+;;(define (make-ball-kev-fn kev)
+;;  (cond 
+;;    [(key=? kev "n") 
+;;     ...]
+;;   [else 
+;;     ...]))
+
+
+;; A MouseMoveEvent is a partition of MouseEvent, which is one of
+;; following categories:
+;; -- "button-down"   (interp: maybe select the ball)
+;; -- "drag"          (interp: maybe drag the ball)
+;; -- "button-up"     (interp: unselect the ball)
+;; -- any other mouse event (interp: ignored)
+
+;;(define (mev-fn mev)
+;;  (cond
+;;   [(mouse=? mev "button-down") ...]
+;;    [(mouse=? mev "drag") ...]
+;;    [(mouse=? mev "button-up") ...]
+;;    [else ...]))
+
+;; END DATA DEFINITIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;initial-world : Any  -> World
+;;GIVEN: An argument, which is ignored.
+;;RETURNS: a world with no balls.
+(define (initial-world n)
+  ( make-world empty))
+
+;;Tests:
+
+(define-test-suite initial-world-test
+  
+  (check-equal? 
+   (initial-world 0) 
+   (make-world  empty) 
+   "initial world selected") )
+(run-tests initial-world-test)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; in-circle? : Ball Number Number -> Boolean
+;; GIVEN: a ball ,x and y coordinates of the mouse
+;; RETURNS: true iff the given coordinate is inside the circle;
+;; EXAMPLES: see tests below
+;; DESIGNSTRATEGY: Structural decomposition on b : Ball
+(define (in-circle? b x y)
+  
+  (if (<= (sqrt(+ (* (- (ball-x b) x) (- (ball-x b) x))  
+                  (* (- (ball-y b) y) (- (ball-y b) y)))) 20)
+      true false))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; world->scene : World Number -> Scene
+;; GIVEN: a world
+;; RETURNS: a Scene that portrays the given world.
+;; EXAMPLE: (world->scene select-for-drag)=>ball-selected-scene
+;; STRATEGY: structural decomposition [World]
+(define(world->scene w
+
+
+(define (fetch-scene lst )
+  (cond
+    [(empty? lst)  EMPTY-CANVAS ]
+    [else (if(ball-selected? (first lst));;HELPER
+             (place-image SELECTED-BALL (ball-x (first lst) )(ball-y (first lst)) (fetch-scene (rest lst)))
+             (place-image UNSELECTED-BALL (ball-x (first lst))(ball-y (first lst)) (fetch-scene (rest lst))))   ])  )             
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;world-after-drag : World Number Number -> World
+;;GIVEN: a world , x-axis and y-axis coordinates of the mouse pointer.
+;;RETURNS: the world following a drag at the given location.
+;;if the world is selected, then return a world just like the given
+;;one, except that it is now centered on the position relative to the
+;;selected point on the circle by the mouse position.
+;;EXAMPLE:
+;;(world-after-drag(make-world 50 30 80 15 true) 200 15)=> 
+;;(make-world 170 30 200 15 true)  
+;;DESIGNSTRATEGY:Functional composition.
+(define (world-after-drag w mx my)
+  (make-world(fetch-drag-list(world-lst w) mx my)))
+
+
+(define (fetch-drag-list lst mx my)
+  (cond
+    [(empty? lst) empty]
+    [else (if(ball-selected? (first lst))
+             (cons (calculate-distance (first lst) mx my) 
+                   (fetch-drag-list (rest lst) mx my))
+             (cons (first lst)(fetch-drag-list (rest lst) mx my)))]))                 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;calculate-distance: Ball Number Number -> World
+;;GIVEN: a world , x-axis and y-axis coordinates of the mouse pointer.
+;;RETURNS: the world following a drag at the given location.
+;;if the world is selected, then return a world just like the given
+;;one, except that it is now centered on the mouse position.
+;;EXAMPLE:
+;;(calculate-distance(make-world 50 30 80 15 true) 200 15)=>  
+;;(make-world 170 30 200 15 true)
+;;DESIGNSTRATEGY:Structural decomposition on w : World 
+(define (calculate-distance b mx my)
+  (make-ball (- mx(-(ball-mx b)(ball-x b))) 
+             (- my(-(ball-my b)(ball-y b))) mx my true))
+
+
+(check-expect(calculate-distance (make-ball 100 200 120 200 true) 140 200) (make-ball 120 200 140 200 true))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;world-after-button-down : World Number Number -> World
+;;GIVEN: a world , x-axis and y-axis coordinates of the mouse pointer.
+;;RETURNS: the world following a button-down at the given location.
+;;if the button-down is inside the circle, return a outlined circle that it is selected.
+;;EXAMPLE:
+
+;;DESIGNSTRATEGY:Structural decomposition on w : World 
+(define (world-after-button-down w mx my)
+  (make-world(fetch-list (world-lst w) mx my)))
+
+(define (fetch-list lst mx my)
+  (cond
+    [(empty? lst) empty]
+    [else (if(in-circle? (first lst) mx my)
+             (cons (make-ball(ball-x (first lst)) (ball-y (first lst)) mx my true)  ;;call helper
+                   (fetch-list (rest lst)mx my))
+             (cons (first lst)(fetch-list (rest lst)mx my)))]))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;world-after-button-up : World Number Number -> World
+;;GIVEN: a world , x-axis and y-axis coordinates of the mouse pointer.
+;;RETURNS: the world following a button-up at the given location.
+;;if the rectangle is selected, return a rectangle just like the given one,
+;;except that it is no longer selected.
+;;EXAMPLE:
+;;(world-after-mouse-event unselected-rectangle
+;;  180 200   ;; a large motion
+;;  "button-up")=> unselected-rectangle  
+;; DESIGNSTRATEGY:  Structural decomposition on w : World
+
+(define (world-after-button-up w mx my)
+  (make-world(fetch-button-up-list(world-lst w) mx my)))
+(define (fetch-button-up-list lst mx my)
+  (cond
+    [(empty? lst) empty]
+    [else (if(ball-selected? (first lst))
+             (cons (make-ball(ball-x (first lst)) (ball-y (first lst)) mx my false) ;;call helper
+                   (fetch-button-up-list (rest lst)mx my))
+             (cons (first lst)(fetch-button-up-list (rest lst)mx my)))]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;world-after-mouse-event : World Number Number MouseEvent -> World
+;;GIVEN: A world , x and y coordinate of the mouse and a mouseevent
+;;RETURNS: the world that follows the given mouse event.
+;;EXAMPLES:
+;;DESIGNSTRATEGY: Structural decomposition on mev:MouseMoveEvent
+(define (world-after-mouse-event w mx my mev)
+  (cond
+    [(mouse=? mev "button-down") (world-after-button-down w mx my)]
+    [(mouse=? mev "drag") (world-after-drag w mx my)]
+    [(mouse=? mev "button-up")(world-after-button-up w mx my)]
+    [else w]))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;ball-selected? : World -> Boolean
+;;GIVEN: a world
+;;RETURNS: true iff the rectangle is selected.
+;;EXAMPLE:
+;;(world-selected? selected-rectangle)=>true
+;;DESIGNSTRATEGY:Structural decomposition on w : World 
+(define ( ball-selected? b)
+  (if (ball-select? b) true false)
+  )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;world-after-key-event : World FallingCatKeyEvent -> World
+;;GIVEN: a world w
+;;RETURNS: the world that should follow the given world
+;;after the given key event.
+;;EXAMPLES: 
+;;(world-after-key-event (make-world selected-cat-at-20 
+;;                                   unselected-cat-at-28 false)up-key-event)=>
+;;(make-world (make-cat 150 20 true "north") unselected-cat-at-28 false)
+
+;;STRATEGY: structural decomposition on kev : FallingCatKeyEvent
+(define (world-after-key-event w kev)
+  (cond
+    [(key=? kev "n")
+     (place-new-ball  w)]
+    [else w]))
+;;struct dec on w
+(define (place-new-ball w)
+  (make-world (update-list (world-lst w))))
+
+(define (update-list lst)
+  (cond
+    [(empty? lst) (cons (make-ball CANVAS-CENTER-X CANVAS-CENTER-Y 0 0  false) empty) ]
+    [else (cons (make-ball CANVAS-CENTER-X CANVAS-CENTER-Y 0 0  false) lst)]))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(run 0);
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

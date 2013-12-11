@@ -1,0 +1,50 @@
+DATE	WHO	Start		Stop	Interruption	Question	TimeOnTask		Comments
+
+13-Oct	PJ	19:30	      23:50	    30		   1		4:20		Started with the question, implemented some logic in new functions	
+
+14-Oct	PJ	10:15	      14:15	    30		   2		4:00		Started with the question
+
+***************************************************Committing to GitHub at 14-Oct 14:16 ***********************************************************************
+
+14-Oct	PJ	22:38	      23:58	    10		   1           1:20	        Changed some functions as they were implemented wrongly
+
+***************************************************Committing to GitHub at 14-Oct 23:59 ***********************************************************************
+
+15-Oct	PJ	12:10	      02:20	    10		   1           2:00	        Completed functions. Tests remaining
+15-Oct	PJ	02:30	      02:55	 		   2           0:25	        implemented the new functionalities
+
+***************************************************Committing to GitHub at 15-Oct 02:55 ***********************************************************************
+
+15-Oct	PJ	18:15	      21:45	    30		   1           3:00	        Competed the functionality in the problem and generalized functions having common
+										        common implementation
+
+15-Oct	PJ	18:15	      21:45	    30		   2           3:00	        Completed functionalities and generalized functions
+
+***************************************************Committing to GitHub at 15-Oct 21:50 ***********************************************************************
+
+15-Oct	PJ	12:20	     14:14	    20		   1           1:55	        Going on with updating the contract and purpose statements
+
+***************************************************Committing to GitHub at 15-Oct 14:15 ***********************************************************************
+
+15-Oct	PJ	16:30	     17:30	 		1           1:00	    final checking of the code
+
+15-Oct	PJ	16:30	     17:30	 		2           1:00	    final checking of the code
+
+***************************************************Committing to GitHub at 15-Oct 17:30 ***********************************************************************
+
+15-Oct	PJ	17.30	     17:50	 		1           00:20	    Done
+
+
+15-Oct	PJ	17.30	     17:50	 		2           00:20	    Done
+
+***************************************************Committing to GitHub at 15-Oct 17:51 ***********************************************************************
+
+
+
+
+Total Time On Task Q1 (minutes)                 818
+Total Time On Task Q2 (minutes)                 512
+TOTQ1 (hours and tenths)                        13.5
+TOTQ2 (hours and tenths)                        8.4											
+
+

@@ -1,0 +1,35 @@
+
+Date  Who    	Start  Stop   Interruptions   Question  TimeOnTask                 Comments
+11/10 SS PJ     16:00  18:00                    1,2       120                Discussed the problem set and read the material 
+11/11 SS PJ     13:00  15:50  10                1         110                Data definition Question 1
+
+11/11 SS PJ     17:00  20:30  20                1         200                Function implementation Q1
+
+----------------------Committed changes to GitHub at 20:45 on 11/11/2013-------------------------------------------
+
+11/12 PJ SS     10:30  13:30  20+10             2         150                Data definition Question 2
+
+----------------------Committed changes to GitHub at 18:46 on 11/12/2013-------------------------------------------
+
+11/12 SS PJ     15:00  18:00  10                1         170                Q1 complete. Test Cases.
+
+----------------------Committed changes to GitHub at 19:16 on 11/12/2013-------------------------------------------
+
+11/12 SS PJ     18:15  20:00  5                 2         170                Function Implementation Q1.      
+
+----------------------Committed changes to GitHub at 20:00 on 11/12/2013-------------------------------------------
+11/12 SS PJ     15:00  18:00  10               1          40                 Q1 Test Cases.
+
+11/13 PJ SS     8:00   12:40  15               2          280                Function Implementation complete.Q2.
+11/13 PJ SS     13:00  14:30  10               2          80                 Design Recipe.Q2.
+11/13 SS PJ     15:00  16:30                   2          90                 HOF and test cases added.Q2.
+
+11/13 SS PJ     16:40  17:00                   1,2        20                 updated notebook11/13 SS PJ     17:10  17:50                   1,2        40                 final changes
+
+----------------------Committed changes to GitHub at 17:52 on 11/13/2013-------------------------------------------
+
+Total Time On Task Q1 (minutes)                  670 
+Total Time On Task Q2 (minutes)                  860
+
+TOTQ1 (hours and tenths)                         11.1
+TOTQ2 (hours and tenths)                         14.3
