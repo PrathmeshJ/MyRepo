@@ -1,0 +1,1102 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="auxfiles/styleowl.xsl"?>
+<rdf:RDF
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns="http://www.ccs.neu.edu/home/kenb/ontologies/usecases#"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xml:base="http://www.ccs.neu.edu/home/kenb/ontologies/usecases#"
+>
+
+  <!-- OOR Use Case Instance Data -->
+  
+  <owl:Ontology rdf:about="">
+    <owl:versionInfo>v 0.2 2010/05/20 14:15:58 kenb/mgurmendez</owl:versionInfo>
+    <rdfs:comment>OOR Use Case Descriptions</rdfs:comment>
+    <owl:imports rdf:resource="http://www.ccs.neu.edu/home/kenb/ontologies/ucdo.owl"/>
+  </owl:Ontology>
+
+  <System rdf:ID="OOR">
+    <name>Open Ontology Repository</name>
+    <author>Ken Baclawski</author>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      The OOR as a participant in use cases. All communication between any user
+      and the OOR is assumed to occur on an authenticated and secure
+      channel. Activities such as login are therefore not included in any of
+      the use cases. The term item is used generically for any entity that is
+      administered by the OOR with versioning and annotations such as
+      provenance information. This includes ontology modules, mappings,
+      configurations, compositions, process definitions and policies.
+      Configuration is itself a generic term that includes contexts, frameworks
+      and situations.
+    </exposition>
+    <version>0.2</version>
+    <organization>Northeastern University</organization>
+    <organization>OOR Initiative</organization>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+  </System>
+
+  <!-- Use Case Descriptions -->
+
+  <UseCase rdf:ID="accredit" system="#OOR">
+    <name>Accredit Registration Authority</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      The accreditation authority decides whether to include a registration
+      authority.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          A user requests that a new registration authority be admitted.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system queues the request and informs the Accreditor.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Accreditor"/>
+        <specification>
+          The Accreditor accredits the new registration authority and grants
+          the registrar role to the requesting user.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system notifies the user that the request was accepted.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user receives the notification.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="registerSteward" system="#OOR">
+    <name>Steward Registration </name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A user wants to become a Steward for a registration authority.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryAuthorities"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user places the request to be a steward to a particular
+          registrar.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system notifies the registrar that a request has been made for a
+          user to become a steward.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Registrar"/>
+        <specification>
+          The registrar approves the request.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system notifies the user.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="registerSubmitter" system="#OOR">
+    <name>Submitter Registration</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A user wants to become a content submitter for a registration authority.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryAuthorities"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user places the request to become a content submitter for a
+          particular steward.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system notifies the steward that a request has been made for the
+          user to become a submitter.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Steward"/>
+        <specification>
+          The steward approves the request.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system notifies the user that the request has been accepted.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="queryAuthorities" system="#OOR">
+    <name>Query the registration authorities</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A user queries the system to obtain information on relevant registration
+      authorities, including the accreditor, registrars and stewards. This will
+      only retrieve publicly released information about the authorities.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          A user requests information on registration authorities that satisfy
+          some specified criteria.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the information about all relevant registration
+          authorities, including all registrars and stewards associated with
+          each registration authority.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="uploadProcessDefinition" system="#OOR">
+    <name>Upload Process or Policy Definition</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      Upload a process or policy definition to the system. This may be a
+      version of an existing process or policy. Such definitions are
+      administered items, so this is a special case of item update in general,
+      but such updates are performed by following a process. Modifying the
+      process that one is using to modify the process could be result in an
+      anomolous situation, so a separate use case was introduced.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessManager"/>
+        <specification>
+          The process manager requests the process and policy definition schemas.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the schemas and explanations for instantiating
+          process and policy definitions. A GUI would normally present the
+          schema using a wizard.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessManager"/>
+        <specification>
+          The process manager uploads the process or policy definition to the
+          system.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system notifies the process manager that the process or policy
+          definition has been uploaded successfully.
+        </specification>
+      </Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="registerItem" system="#OOR">
+    <name>Register Item</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A submitter registers an administered item. This is a new item, not a
+      version of an existing item. Items include ontology modules, mappings and
+      contexts. Process and policy definitions are administered items, but they
+      have their own separate use case, and the participant is process manager
+      rather than a submitter. Submission of a item is the first step in a
+      process whereby an item progresses through a series of levels. The
+      default process is very simple. Many communities will have more complex
+      processes.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Submitter"/>
+        <specification>
+          The submitter uploads an administered item.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns a confirmation message and a version number for
+          the newly created administered item.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system enqueues a task for validating the uploaded item using the
+          appropriate policies.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="validateItem" system="#OOR">
+    <name>Validate Item</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      Validation tasks can be time-consuming so they are enqueued for
+      asynchronous processing.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system performs a validation task in the queue according to the
+          current policies for items belonging to the registration authority
+          and steward.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Submitter"/>
+        <specification>
+          The system notifies the original submitter of the result of the
+          validation task.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Steward"/>
+        <specification>
+          The system notifies the steward of the result of the validation task.
+        </specification>
+        <next>
+      <Step>
+        <startsAfter rdf:resource="#notifyRegistrar"/>
+      </Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <Alternative rdf:ID="notifyRegistrar">
+    <name>Notify Registrar</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      The registrar is notified of the result of a validation task.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <precondition>
+      <Condition>
+        <specification>
+          The validation task is relevant to the registrar as specified in the
+          relevant policies.
+        </specification>
+      </Condition>
+    </precondition>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Registrar"/>
+        <specification>
+          The system notifies the registrar of the result of a validation task.
+        </specification>
+      </Step>
+    </first>
+  </Alternative>
+
+  <UseCase rdf:ID="queryItem" system="#OOR">
+    <name>Query Administered Item</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A user queries the system to find an administered item. Items include
+      ontology modules, mappings and contexts. Process and policy definitions
+      have their own use case.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits a combination subset of query component
+          values. These can include title, release date and status.  The user
+          also specifies how to sort the results, and a desired rank range of
+          results.  For example: the user might search for "Virus Infection",
+          released before 01/10/2009, with STANDARD status, sorted by release
+          date, and returning the ranked list that goes from entry 20 to 30.
+          Optionally, the specific version can also be included in the query.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns a list of administered items that match the user
+          query and satisfy any access constraints.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="navigateItem" system="#OOR">
+    <name>Navigate Administered Item</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      An elementary step during browsing. Unlike a query, the user has the item
+      identifier rather than some search criteria.  The result of the
+      navigation is a set of attributes of the item that provide a minimal
+      description of it as well as the item identifiers of related items.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits an item identifier.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the list of attributes of the item that the user has
+          the right to access.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="retrieveItem" system="#OOR">
+    <name>Retrieve Administered Item</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      Retrieve the entire administered item. Some ontology modules, mappings or
+      contexts are very large, so this should not be a common operation.  Note
+      that there is no requirement that the administered item be physically
+      stored by the OOR instance. However, it should be able to retrieve items
+      from wherever they are stored when requested.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits an item identifier.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the administered item that the user has the right
+          right to access.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="extractFromItem" system="#OOR">
+    <name>Extract Administered Item Part</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      Retrieve part of an administered item. Some ontology module, mappings and
+      contexts are very large, so partial retrieval may be necessary. This is
+      the preferred use case for internal browsing of an ontology module or
+      mapping.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits an item identifier and specification of a part of an
+          item to be retrieved.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the request part of the administered item that the
+          user has the right to access.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="useItem" system="#OOR">
+    <name>Use Administered Item</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      Register that the administered item is being used. This can be the basis
+      for maintaining usage statistics.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits an item identifier.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system confirms the usage of the item.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="updateItem" system="#OOR">
+    <name>Update Administered Item</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A submitter or steward updates annotations associated with an
+      administered item. The item itself is not updated. Item update is handled
+      by versioning.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryItem"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Steward"/>
+        <specification>
+          The steward selects an administered item for updating its
+          annotation.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          A template for administered item annotations with known values filled
+          in is given to the steward.  A GUI may present this using a wizard.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Steward"/>
+        <specification>
+          The steward modifies values of the administered item annotations.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns a confirmation message and a new version number
+          for the administered item annotations.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="versionItem" system="#OOR">
+    <name>Upload Administered Item Version</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      A submitter or steward creates a new version of an existing item.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryItem"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Submitter"/>
+        <specification>
+          The submitter selects an administered item as the previous version of
+          the item.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Submitter"/>
+        <specification>
+          The submitter uploads an administered item.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns a confirmation message and a new version number
+          for the administered item.
+        </specification>
+        <next>
+      <Step>
+        <startAfter rdf:resource="#mapVersion"></startAfter>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <Alternative rdf:ID="mapVersion">
+    <name>Map Administered Item Version</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      A mapping is defined for a new version of an administered item.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <precondition>
+      <Condition>
+        <specification>
+          The new version of the administered item is backwardly compatible with the previous version.
+        </specification>
+      </Condition>
+    </precondition>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Submitter"/>
+        <specification>
+          The submitter uploads a mapping from the previous version to the new version.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system confirms that the mapping has been uploaded.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </Alternative>
+
+  <UseCase rdf:ID="mapItems" system="#OOR">
+    <name>Upload Administered Item Map</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      A submitter registers a mapping from one item to another item.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryItem"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Submitter"/>
+        <specification>
+          The steward selects two administered items for the mapping.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          A template for the mapping is given to the submitter.  A GUI may
+          present this using a wizard.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Submitter"/>
+        <specification>
+          The submitter modifies values of the mapping annotations and uploads
+          a mapping from one item to the other item.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system confirms that the mapping has been uploaded.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="composeItems" system="#OOR">
+    <name>Compose Administered Items</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+      A submitter composes a number of ontology modules or contexts and
+      registers the composition. One would expect that an application will use
+      more than one ontology. In many cases one can define the composition by
+      importing ontologies and adding additional axioms (such as sameAs
+      relationships).  However, there are cases where this is not possible, so
+      a use case is available for more complex compositions.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryItem"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user selects administered items, usually ontology modules,
+          contexts and mappings.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          A template for the composition is given to the user.  A GUI may
+          present this using a suitable graphical editor.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user defines the compositional diagram.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system stores the compositional diagram and returns a composition
+          identifier.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="processInstanceForm" system="#OOR">
+    <name>Process Instance Form Completion</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A user needs to input some information as required by one step in a
+      process definition.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system notifies a process participant that some information needs
+          to be provided for a process associated with an administered item.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessParticipant"/>
+        <specification>
+          The user queries the system for the list of tasks to be completed.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns all the pending tasks for the user.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessParticipant"/>
+        <specification>
+          The user select one of the pending tasks.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          A template for the information required by the task is given to the
+          user. A GUI can present this to the user using a wizard.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessParticipant"/>
+        <specification>
+          The user submits the information required for the task.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="updateContact" system="#OOR">
+    <name>Update Contact Information</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A user changes contact information. This can include retiring from the
+      OOR.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryContact"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits new contact information (i.e., email address, name
+          or surname).
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="reviewItem" system="#OOR">
+    <name>Review an administered item</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A user informally reviews the administered item, for example, by
+      providing comments and number rating. Formal reviews and evaluations are
+      performed as part of a process. This use case is only concerned with ad
+      hoc informal reviews.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryItem"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user selects an item and submits a comment and/or a rating for a
+          particular version of an administered item.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system records the information and sends the user a confirmation
+          message.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="retrieveReviews" system="#OOR">
+    <name>Query reviews</name>
+    <author>Ken Baclawski</author>
+    <exposition>
+       The user wants to see reviews and evaluations for an item.  This use
+       case deals only with informal reviews. Formal reviews are part of a
+       process and are normally confidential.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryItem"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user selects an administered item and specifies which reviews or
+          evaluations are to be returned.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the requested reviews or evaluations.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="advertise" system="#OOR">
+    <name>Advertise Administered Items</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+       The user retrieves a list of some of the administered items that are to
+       specially advertised. This differs from a query because the query is OOR
+       generated rather than user generated.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits a request to see the advertised administered item
+          (e.g., when opening the home page of the system).
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the advertised administered item using some OOR
+          instance-specific criteria (e.g., the items which have a STANDARD
+          status and a high rating).
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="retireProcessParticipant" system="#OOR">
+    <name>Retire Process Participant</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A process participant desires to retire from their system
+      responsibilities.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessParticipant"/>
+        <specification>
+          The process participant submits a request to retire from the system.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system responds with a confirmation message.
+        </specification>
+        <next>
+      <Step>
+        <startAfter rdf:resource="#reassignProcessParticipant"></startAfter>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <Alternative rdf:ID="reassignProcessParticipant">
+    <name>Reassign Process Participant</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+      A process participant has retired and any responsibility must be taken
+      over by some other process participant.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <precondition>
+      <Condition>
+        <specification>The user is a process participant.</specification>
+      </Condition>
+    </precondition>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system sends a request to other process participants (i.e.,
+          registrars, stewards and submitters) in the same registration
+          authority and at the same level (i.e., steward, registrar or
+          submitter). The request is to take over the responsibility of the
+          process participant that has retired, with a request number.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessParticipant"/>
+        <specification>
+          A user sends the petition number and an acknowledgement that is
+          willing to accept the petition. We will call this user the candidate.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system informs the immediate superior that a candidate exists for
+          a user to accept the petition.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessParticipant"/>
+        <specification>
+          The immediate superior accepts the candidate.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system informs the candidate, that it has now inherited the
+          responsibilities of the retired user.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </Alternative>
+  
+  <UseCase rdf:ID="queryProcedures" system="#OOR">
+    <name>Query procedures</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+       The user wants to retrieve the procedures regarding the standardization
+       process. This is only relevant for users who might participate in a
+       process.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#ProcessParticipant"/>
+        <specification>
+          The user submits a request to see the procedures that satisfy
+          specified criteria.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns all the procedures that satisfy the criteria.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="queryMetrics" system="#OOR">
+    <name>Query metrics</name>
+    <author>Ken Baclawski</author>
+    <author>Natasha Noy</author>
+    <exposition>
+       The user wants to see metrics about an administered item. Examples include:
+       <ol>
+       <li>number of statements (terms, relationships) in an item</li>
+       <li>number of statements referencing a given URI</li>
+       <li>number of revisions to a given context or statement</li>
+       <li>number of users/organizations using the item</li>
+       <li>number of contexts/terms accessed (served)</li>
+       <li>number of times a given context or term has been accessed</li>
+       </ol>
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">May 20, 2010</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#queryItem"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user selects an administered item and requests its metrics.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns the metrics for the item.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="queryContact" system="#OOR">
+    <name>Query Contact Information</name>
+    <author>M&#225;ximo Gurm&#233;ndez</author>
+    <exposition>
+       The user wants to retrieve contact information for users. This
+       information is normally confidential so access constraints will be
+       enforced.
+    </exposition>
+    <creationDate rdf:type="http://www.w3.org/2001/XMLSchema#date">March 14, 2010</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits a request for the contact information of users
+          satisfying search criteria.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#OOR"/>
+        <specification>
+          The system returns contact information relevant to the query and
+          satisfying access constraints.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+
+  <!-- Actors -->  
+
+  <Actor rdf:ID="Accreditor">
+    <name>Accreditation Authority</name>
+    <exposition>
+      The singular authority that manages the registration authorities of the
+      OOR.  One important responsibility of the accreditor is the allocation of
+      top-level names.  Consequently, the accreditor is analogous to a domain
+      name registrar. The primary difference is that domain names can be bought
+      and sold, while the names allocated by the accreditor must be permanent
+      and in the public domain.
+    </exposition>
+    <kindOf rdf:resource="#ProcessManager"/>
+  </Actor>
+  
+  <Actor rdf:ID="Registrar">
+    <name>Registration Authority</name>
+    <exposition>
+      A top-level registration authority. It has a top-level name assigned by
+      the accreditor. Standards bodies, professional societies and publishers
+      are examples of registration authorities. Although a registrar is an
+      organization, the organizational structure is not represented in the OOR.
+      Consequently, a registrar is a kind of user with specific capabilities
+      and responsibilities that are not common to all users. One can think of a
+      registrar as a user that represents the registration authority during
+      interactions with the OOR.
+    </exposition>
+    <kindOf rdf:resource="#ProcessManager"/>
+  </Actor>
+  
+  <Actor rdf:ID="Steward">
+    <name>Community Steward</name>
+    <exposition>
+      A domain-specific community within the context of a registration
+      authority.  Examples include a working group of a standards body, a
+      special interest group of a professional society, and a journal produced
+      by a publisher.  Although a community is a collection of individuals, its
+      internal structure is not represented in the OOR. Consequently, a steward
+      is a kind of user with specific capabilities and responsibilities that
+      are not common to all users. One can think of a steward as a user that
+      represents the community during interactions with the OOR.
+    </exposition>
+    <kindOf rdf:resource="#ProcessManager"/>
+  </Actor>
+  
+  <Actor rdf:ID="Submittter">
+    <name>Content Submitter</name>
+    <exposition>
+      An individual that submits new materials or changes to existing materials
+      that are managed by a specific steward. Depending on the steward, there
+      may be no restrictions on who can be a submitter or there may be only a
+      fixed set of submitters.
+    </exposition>
+    <kindOf rdf:resource="#ProcessParticipant"/>
+  </Actor>
+  
+  <Actor rdf:ID="ProcessManager">
+    <name>Process Manager</name>
+    <exposition>
+      The common generalization of accreditors, registrars and stewards.  They
+      share the capability of creating and managing process and policy
+      definitions.
+    </exposition>
+    <kindOf rdf:resource="#ProcessParticipant"/>
+  </Actor>
+  
+  <Actor rdf:ID="ProcessParticipant">
+    <name>Process Participant</name>
+    <exposition>
+      A user that participates in an OOR process. Since processes are
+      associated with registrars and stewards, a user that participates in an
+      OOR process is implicitly also associated with that registrar or
+      steward. For example, a user could contribute to the OOR by providing
+      usage information and informal evaluations.
+    </exposition>
+    <kindOf rdf:resource="#User"/>
+  </Actor>
+  
+  <Actor rdf:ID="User">
+    <name>General User</name>
+    <exposition>
+      A user of the OOR. This includes process managers and participants as
+      well as individuals who are searching the OOR or retrieving from it in an
+      ad hoc manner. Unlike process managers and participants, users in general
+      need not be associated with a registrar or steward.
+    </exposition>
+  </Actor>
+
+</rdf:RDF>

@@ -1,0 +1,135 @@
+<edmx:Edmx Version="1.0"
+  xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+  xmlns:edm="http://docs.oasis-open.org/odata/ns/edm">
+ <edmx:DataServices DataServiceVersion="4.0">
+  <edm:Schema Alias="Library" Namespace="http://ccs.neu.edu/cs5200/mbps/library">
+  
+   <!-- a book entity has several attributes, is rented by 0-* members, and belongs to 0-1 wish lists -->
+   <edm:EntityType Name="Book">
+    <edm:Key>
+     <edm:PropertyRef Name="id"/>
+    </edm:Key>
+    <edm:Property Name="id" Type="Edm.Integer" Nullable="false"/>
+    <edm:Property Name="isbn" Type="Edm.String" Nullable="true"/>
+    <edm:Property Name="title" Type="Edm.String" Nullable="true"/>
+    <edm:Property Name="author" Type="Edm.String" Nullable="true"/>
+    <edm:Property Name="publisher" Type="Edm.String" Nullable="true"/>
+    <edm:Property Name="genre" Type="Edm.String" Nullable="true"/>
+    <edm:Property Name="numCopes" Type="Edm.Integer" Nullable="true"/>
+    <edm:NavigationProperty Name="rentedBy" Relationship="Library.rental" FromRole="Book" ToRole="Member"/>
+    <edm:NavigationProperty Name="belongsTo" Relationship="Library.wishList" FromRole="Book" ToRole="WishList"/>
+   </edm:EntityType>
+   
+   <!-- a wish list entity has 0-* books and belongs to 1 member -->
+   <edm:EntityType Name="WishList">
+    <edm:Key>
+     <edm:PropertyRef Name="id"/>
+    </edm:Key>
+    <edm:Property Name="name" Type="Edm.String" Nullable="false"/>
+    <edm:NavigationProperty Name="books" Relationship="Library.wishList" FromRole="WishList" ToRole="Book"/>
+    <edm:NavigationProperty Name="belongsTo" Relationship="Library.hasWishList" FromRole="WishList" ToRole="Member"/>
+   </edm:EntityType>
+   
+   <!-- a user has a name and an email, and can create requests -->
+   <edm:EntityType Name="User">
+    <edm:Key>
+     <edm:PropertyRef Name="userID"/>
+    <edm:Key>
+    <edm:Property Name="name" Type="Edm.String" Nullable="false"/>
+    <edm:Property Name="email" Type="Edm.String" Nullable="false"/>
+    <edm:NavigationProperty Name="requests" Relationship="Library.User_Request" FromRole="User" ToRole="Request"/>
+   </edm:EntityType>
+
+    
+   <!-- a member has several attributes, rents 0-* books, and has 1 wish list -->
+   <edm:EntityType Name="Member">
+    <edm:Key>
+     <edm:PropertyRef Name="memberID"/>
+    </edm:Key>
+    <edm:Property Name="memberID" Type="Edm.String" Nullable="false"/>
+    <edm:Property Name="name" Type="Edm.String" Nullable="false"/>
+    <edm:Property Name="email" Type="Edm.String" Nullable="false"/>
+    <edm:Property Name="address" Type="Edm.String" Nullable="true"/>
+    <edm:Property Name="phoneNumber" Type="Edm.String" Nullable="true"/>
+    <edm:NavigationProperty Name="rents" Relationship="Library.Book_Rental" FromRole="Member" ToRole="Rental"/>
+    <edm:NavigationProperty Name="wishList" Relationship="Library.hasWishList" FromRole="Member" ToRole="WishList"/>
+   </edm:EntityType>
+   
+   <!-- a rental has several attributes and is associated with a book and a member -->
+   <edm:EntityType Name="Rental">
+    <edm:Key>
+     <edm:PropertyRef Name="rental"/>
+    </edm:Key>
+    <edm:Property Name="rental" Type="Edm.Integer" Nullable="false"/>
+    <edm:Property Name="startDate" Type="Edm.DateTime" Nullable="false"/>
+    <edm:Property Name="dueDate" Type="Edm.DateTime" Nullable="false"/>
+    <edm:Property Name="due" Type="Edm.Double" Nullable="true"/>
+    <edm:NavigationProperty Name="rentedBy" Relationship="Library.Member_Rental" FromRole="Rental" ToRole="Member"/>
+    <edm:NavigationProperty Name="rents" Relationship="Library.Book_Rental" FromRole="Rental" ToRole="Book"/>
+   </edm:EntityType>
+   
+   <!-- an administrator can respond to requests -->
+   <edm:EntityType Name="Administrator" Extends="Member">
+    <edm:NavigationProperty Name="respondsTo" Relationship="Library.Administrator_Request" FromRole="Administrator" ToRole="Request"/>
+   </edm:EntityType>
+   
+   <!-- a user requests a membership -->
+   <edm:EntityType Name="Request">
+    <edm:Key>
+     <edm:PropertyRef Name="requestID"/>
+    </edm:Key>
+    <edm:Property Name="requestID" Type="Edm.Integer" Nullable="false"/>
+    <edm:Property Name="requestType" Type="Edm.String" Nullable="false"/>
+    <edm:Property Name="address" Type="Edm.String" Nullable="false"/>
+    <edm:Property Name="phoneNumber" Type="Edm.String" Nullable="false"/>
+    <edm:NavigationProperty Name="createdBy" Relationship="Library.User_Request" FromRole="Request" ToRole="User"/>
+   </edm:EntityType>    
+   
+   <!-- the relationship between member and rental -->
+   <edm:Association Name="Member_Rental">
+    <edm:End Role="Member" Type="Library.Member" Multiplicity="0..*"/>
+    <edm:End Role="Rental" Type="Library.Rental" Multiplicity="1"/>
+   </edm:Association>
+   
+   <!-- the relationship between book and rental -->
+   <edm:Association Name="Book_Rental">
+    <edm:End Role="Book" Type="Library.Book" Multiplicity="0..1"/>
+    <edm:End Role="Rental" Type="Library.Rental" Multiplicity="0..*"/>
+   </edm:Association>
+
+   <!-- the wishlist relationship between book and wishlist -->
+   <edm:Association Name="wishList">
+    <edm:End Role="Book" Type="Library.Book" Mulitiplicity="0..*"/>
+    <edm:End Role="WishList" Type="Library.WishList" Multiplicity="0..*"/>
+   </edm:Association>
+   
+   <!-- the relationship between member and wishlist -->
+   <edm:Association Name="hasWishList">
+    <edm:End Role="WishList" Type="Library.WishList" Multiplicity="1"/>
+    <edm:End Role="Member" Type="Library.Member" Multiplicity="0..1"/>
+   </edm:Association>
+   
+   <!-- the relationship between user and request -->
+   <edm:Association Name="User_Request">
+    <edm:End Role="User" Type="Library.User" Multiplicity="1"/>
+    <edm:End Role="Request" Type="Library.Request" Multiplicity="0..*"/>
+   </edm:Association>
+   
+   <!-- the relationship between admin and request -->
+   <edm:Association Name="Administrator_Request">
+    <edm:End Role="Administrator" Type="Library.Administrator" Multiplicity="0..1"/>
+    <edm:End Role="Request" Type="Library.Request" Mulitplicity="0..*"/>
+   </edm:Association>
+
+   <!-- odata endpoint entry point -->
+   <edm:EntityContainer Name="University">
+    <edm:EntitySet Name="Books" EntityType="Library.Book"/>
+    <edm:EntitySet Name="Members" EntityType="Library.Member"/>
+    <edm:EntitySet Name="Administrators" EntityType="Library.Administrator"/>
+    <edm:entitySet Name="Rentals" EntityType="Library.Rental"/>
+    <edm:entitySet Name="Requests" EntityType="Library.Request"/>
+   </edm:EntityContainer>
+   
+  </edm:Schema>
+ </edmx:DataServices>
+</edmx:Edmx>

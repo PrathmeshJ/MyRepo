@@ -1,0 +1,620 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="auxfiles/styleowl.xsl"?>
+<rdf:RDF
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns="http://www.ccs.neu.edu/home/kenb/ontologies/usecases#">
+
+  <!-- LDB Use Case Instance Data -->
+  
+  <owl:Ontology rdf:about="">
+    <owl:versionInfo>v 0.2 2013/10/16 14:15:58 mbps</owl:versionInfo>
+    <rdfs:comment>Library Database Use Case Descriptions</rdfs:comment>
+    <owl:imports rdf:resource="http://www.ccs.neu.edu/home/kenb/ontologies/ucdo.owl"/>
+  </owl:Ontology>
+
+  
+  <!-- Participants -->
+  
+  <System rdf:ID="LDB">
+    <name>MBPS Library Database</name>
+    <author>Ben Arneberg</author>
+    <author>Sathya Ragavan</author>
+	<author>Matt Lemanski</author>
+	<author>Prathmesh Jakkanwar</author>
+    <exposition>
+      The LDB as a participant in use cases. 
+    </exposition>
+    <version>0.1</version>
+    <organization>MBPS</organization>
+    <creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+  </System>
+  
+  
+  
+  <!-- Actors -->  
+
+  <Actor rdf:ID="User">
+    <name>User</name>
+    <exposition>
+      Anyone who can search for books.
+    </exposition>
+  </Actor>
+  
+  <Actor rdf:ID="Member">
+    <name>Member</name>
+    <exposition>
+      A user with a membership; borrows books.
+    </exposition>
+	<kindOf rdf:resource="#User"/>
+  </Actor>  
+  
+  <Actor rdf:ID="Librarian">
+    <name>Librarian</name>
+    <exposition>
+	Manages book inventory, checks books out, updates member dues.
+    </exposition>
+    <kindOf rdf:resource="#Member"/>
+  </Actor>
+  
+  <Actor rdf:ID="Admin">
+    <name>Administrator</name>
+    <exposition>
+	Manages Member accounts.
+    </exposition>
+    <kindOf rdf:resource="#Member"/>
+  </Actor>
+
+  
+  
+  
+  <!-- Use Case Descriptions -->
+
+ 
+  <!-- Begin User Use Cases -->
+  
+  <UseCase rdf:ID="search" system="#LDB">
+    <name>Search for a Book</name>
+    <author>MBPS</author>
+    <exposition>
+      The user can search for a book by title, author, publisher, genre, or ISBN
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user submits a search by filling out title, author, publisher, genre, and/or ISBN fields
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system searches for books using the fields provided by the user and returns the results.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="signIn" system="#LDB">
+    <name>Sign in to Membership Account</name>
+    <author>MBPS</author>
+    <exposition>
+      The user logs in to their membership account in order to update their profile information, manage their book wishlist, and pay fees.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user adds login information and clicks "log in" button
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system verifies the validity of the login information and notifies user of login status.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="request" system="#LDB">
+    <name>Request a Membership Account</name>
+    <author>MBPS</author>
+    <exposition>
+      The user requests a new membership account by registering a username, creating a password, and adding contact information.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#User"/>
+        <specification>
+          The user fills in the username, password, and contact information fields.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The System stores valid username, password, contact information and notifies user of account creation status.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+  
+  
+  <!-- Begin Member Use Cases -->
+  
+  <UseCase rdf:ID="addToWishList" system="#LDB">
+    <name>Add a Book to the Wish List</name>
+    <author>MBPS</author>
+    <exposition>
+      The member can add books they are interested in to a custom wish list.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+	    <includes rdf:resource="#search"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Member"/>
+        <specification>
+          The member clicks "Add Book to Wish List".
+        </specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+		<specification>
+	      The system updates the member's Wish List to include the selected book.
+		</specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+		<specification>
+		  The system notifies the user of Wish List addition status.
+		</specification>
+	  </Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="viewWishList" system="#LDB">
+    <name>View Wish List</name>
+	<author>MBPS</author>
+	<exposition>
+	  The member can view the items that currently exist in their Wish List.
+	</exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+	<first>
+	  <Step>
+	    <stepInitiator rdf:resource="#Member"/>
+		<specification>
+		  The member clicks on "View My Wish List".
+		</specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+		  The system displays the current member's Wish List.
+		</specification>
+	  </Step></next></Step>
+	</first>
+  </UseCase>
+
+  <UseCase rdf:ID="removeFromWishList" system="#LDB">
+    <name>Remove a Book from the Wish List</name>
+    <author>MBPS</author>
+    <exposition>
+      The member can remove books from their wish list.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+	    <includes rdf:resource="#viewWishList"/>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Member"/>
+        <specification>
+          The member selects one or more books and clicks the "Remove from Wish List" button.
+        </specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+		<specification>
+	      The system removes the selected books from the member's associated Wish List.
+		</specification>
+	  </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="viewProfile" system="#LDB">
+    <name>View Profile</name>
+	<author>MBPS</author>
+	<exposition>
+	  The member can view their profile.
+	</exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+	<first>
+	  <Step>
+	    <stepInitiator rdf:resource="#Member"/>
+		<specification>
+		  The member clicks on "View My Profile".
+		</specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+		  The system displays the member's profile information.
+		</specification>
+	  </Step></next></Step>
+	</first>
+  </UseCase>
+  
+  <UseCase rdf:ID="editProfile" system="#LDB">
+    <name>Edit Profile</name>
+	<author>MBPS</author>
+	<exposition>
+	  The member can edit their profile information.
+	</exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+	<first>
+	  <Step>
+	    <includes rdf:resource="#viewProfile"/>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#Member"/>
+		<specification>
+		  The member submits update profile information.
+		</specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+		  The system returns a confirmation message.
+		</specification>
+	  </Step></next></Step></next></Step>
+	</first>
+  </UseCase>
+
+  <UseCase rdf:ID="viewBooksCheckedOut" system="#LDB">
+    <name>View Books Checked Out</name>
+	<author>MBPS</author>
+	<exposition>
+	  The member can view the books currently checked out from the library.
+	</exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+	<first>
+	  <Step>
+	    <stepInitiator rdf:resource="#Member"/>
+		<specification>
+		  The member clicks on "View Books Checked Out".
+		</specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+		  The system displays the books checked out by the member, the due date, and the days until due.
+		</specification>
+	  </Step></next></Step>
+	</first>
+  </UseCase> 
+
+  <UseCase rdf:ID="viewDues" system="#LDB">
+    <name>View Dues</name>
+	<author>MBPS</author>
+	<exposition>
+	  The member can view dues from any books that have been kept past their due date.
+	</exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+	<first>
+	  <Step>
+	    <stepInitiator rdf:resource="#Member"/>
+		<specification>
+		  The member clicks on "View Dues".
+		</specification>
+		<next>
+	  <Step>
+	    <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+		  The system displays any dues owed by the member.
+		</specification>
+	  </Step></next></Step>
+	</first>
+  </UseCase>
+  
+  
+  
+  <!-- Begin Librarian Use Cases -->
+  
+  <!-- Use Case for Add Book -->
+  <UseCase rdf:ID="addBook" system="#LDB">
+    <name>Add Book</name>
+	<author>MBPS</author>
+    <exposition>
+       The librarian can add a new book to the library's inventory.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian clicks on "Add New Book"
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian fills out the book information fields.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system adds the book to the inventory and displays a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  
+  <!--Use Case for Remove Book -->
+  <UseCase rdf:ID="removeBook" system="#LDB">
+    <name>Remove book</name>
+	<author>MBPS</author>
+    <exposition>
+      The librarian can remove a book from the library's inventory.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian clicks on "Remove Book".          
+        </specification>
+        <next>
+      <Step>
+		<includes rdf:resource="#search"/> 
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian selects books to delete and clicks "remove".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system deletes the selected books and displays a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <!--Use Case for Check Out Book-->
+  <UseCase rdf:ID="checkBookOut" system="#LDB">
+    <name>Check Book Out</name>
+	<author>MBPS</author>
+    <exposition>
+      The librarian can add a book to a member's inventory and assign its due date.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian clicks on "Check Member Books Out".
+        </specification>
+        <next>
+      <Step>
+		<includes rdf:resource="#search"/> 
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian selects books to check out and clicks "Check Books Out".
+        </specification>               
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian enters a member ID and clicks "Check Books Out for Member".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system assigns a copy of that book to the given member with a due date and displays a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <!-- Use Case for Update Member Dues -->
+  <UseCase rdf:ID="updateMemberDues" system="#LDB">
+    <name>Update Member Dues</name>
+	<author>MBPS</author>
+    <exposition>
+      The librarian can update a member's dues when they pay off their debt.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian clicks on "Update Member Dues".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian enters member ID and clicks "Submit".              
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system returns the member's information.
+        </specification>               
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#Librarian"/>
+        <specification>
+          The librarian updates the amount owed and hits submit.
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system updates the member's amount owed and displays a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+
+  
+  <!-- Begin Administrator Use Cases -->
+  
+  <UseCase rdf:ID="viewAccount" system="#LDB">
+    <name>View Account</name>
+    <author>MBPS</author>
+    <exposition>
+      An administrator can view details of any account.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+          The administrator clicks on "View Account".
+        </specification>
+		<next>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+		  The administrator enters member id and clicks on "Submit".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system performs a search and returns the details of that account.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="viewRequests" system="#LDB">
+    <name>View Requests</name>
+    <author>MBPS</author>
+    <exposition>
+      An administrator can view requests for creating or deleting a member account.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+          The administrator clicks on "View Requests".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system finds account creation and deletion requests and displays it.
+        </specification>
+      </Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="createAccount" system="#LDB">
+    <name>Create Account</name>
+    <author>MBPS</author>
+    <exposition>
+      An administrator can create an account for new members.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#viewRequests"/> 
+		<next>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+		 The administrator clicks on "Create Account"
+        </specification>
+		<next>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+		 The administrator fills in all the information for the new member and clicks "Submit".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system adds the new account and displays confirmation message.
+        </specification>
+      </Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+  
+  <UseCase rdf:ID="editAccount" system="#LDB">
+    <name>Edit Account</name>
+    <author>MBPS</author>
+    <exposition>
+      An administrator can edit the information for any member.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#viewAccount"/> 
+		<next>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+		 The administrator clicks on "Edit" to edit the information in any field and clicks on "Submit".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system updates the account information and returns a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+
+  <UseCase rdf:ID="removeAccount" system="#LDB">
+    <name>Remove Account</name>
+    <author>MBPS</author>
+    <exposition>
+      An administrator can remove an account when a member terminates his membership.
+    </exposition>
+	<creationDate rdf:type="xsd:date">October 6, 2013</creationDate>
+    <first>
+      <Step>
+        <includes rdf:resource="#viewRequests"/> 
+		<next>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+		 The administrator clicks on "Delete Account".
+        </specification>
+		<next>
+      <Step>
+        <stepInitiator rdf:resource="#Admin"/>
+        <specification>
+		 The administrator enters the member id and clicks on "Delete Account".
+        </specification>
+        <next>
+      <Step>
+        <stepInitiator rdf:resource="#LDB"/>
+        <specification>
+          The system deletes the account and returns a confirmation message.
+        </specification>
+      </Step></next></Step></next></Step></next></Step>
+    </first>
+  </UseCase>
+</rdf:RDF>
